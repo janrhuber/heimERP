@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>heimERP – Liegenschaftskosten &amp; Steuerabzüge (AG)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>heim<span>ERP</span> <span class="muted" style="font-weight:400">· Liegenschaftskosten &amp; Steuern Aargau</span></h1>
+  <div class="spacer"></div>
+  <span id="status">Kein Datenordner verbunden</span>
+  <button id="btnFolder" class="primary">📁 Datenordner wählen</button>
+</header>
+
+<main>
+
+  <div id="startHint" class="hint">
+    <b>Erster Start:</b> Klicke oben auf «Datenordner wählen» und wähle (oder erstelle) einen Ordner,
+    z.&nbsp;B. <code>C:\git\heimERP\Daten</code>. Dort legt das Tool die Datei <code>ausgaben.csv</code>
+    (mit Excel öffnenbar) und den Ordner <code>Belege\&lt;Jahr&gt;\</code> für Rechnungen/Quittungen an.
+    Funktioniert in Microsoft Edge und Google Chrome. Beim nächsten Start genügt ein Klick auf «Erneut verbinden».
+  </div>
+
+  <div class="tabs no-print">
+    <button id="tabErfassen" class="active">✏️ Erfassen &amp; Liste</button>
+    <button id="tabJahr">📊 Jahresrechnung</button>
+    <button id="tabBudget">💰 Budget</button>
+    <button id="tabVerkauf">🏠 Dossier Grundstückgewinnsteuer</button>
+  </div>
+
+  <!-- ============ TAB 1: ERFASSEN ============ -->
+  <section id="viewErfassen">
+    <div class="panel no-print">
+      <h2 id="formTitle">Neue Ausgabe erfassen</h2>
+      <div class="grid form">
+        <div class="col-2">
+          <label for="fDatum">Datum</label>
+          <input type="date" id="fDatum">
+        </div>
+        <div class="col-4">
+          <label for="fBeschreibung">Beschreibung</label>
+          <input type="text" id="fBeschreibung" placeholder="z. B. Ersatz Heizungsboiler">
+        </div>
+        <div class="col-3">
+          <label for="fLieferant">Handwerker / Lieferant</label>
+          <input type="text" id="fLieferant" placeholder="z. B. Sanitär Muster AG">
+        </div>
+        <div class="col-3">
+          <label for="fKategorie">Kategorie</label>
+          <select id="fKategorie"></select>
+        </div>
+        <div class="col-2">
+          <label for="fBetrag">Betrag CHF</label>
+          <input type="number" id="fBetrag" step="0.05" min="0" placeholder="0.00">
+        </div>
+        <div class="col-2">
+          <label for="fUnterhalt">Abzug Unterhalt %</label>
+          <input type="number" id="fUnterhalt" min="0" max="100" step="1" value="100" title="Anteil, der als werterhaltender Unterhalt vom Einkommen abziehbar ist">
+        </div>
+        <div class="col-2">
+          <label for="fWert">Wertvermehrend %</label>
+          <input type="number" id="fWert" min="0" max="100" step="1" value="0" title="Anteil, der beim Verkauf als Anlagekosten die Grundstückgewinnsteuer reduziert">
+        </div>
+        <div class="col-3">
+          <label for="fProjekt">Projekt (optional)</label>
+          <input type="text" id="fProjekt" list="projektListe" placeholder="z. B. Badumbau">
+          <datalist id="projektListe"></datalist>
+        </div>
+        <div class="col-3">
+          <label for="fNotizen">Notizen</label>
+          <input type="text" id="fNotizen" placeholder="optional">
+        </div>
+        <div class="col-3">
+          <label for="fWiederholung">Wiederholung</label>
+          <select id="fWiederholung">
+            <option value="X">einmalig</option>
+            <option value="M">monatlich</option>
+            <option value="Q">vierteljährlich</option>
+            <option value="H">halbjährlich</option>
+            <option value="J">jährlich</option>
+          </select>
+        </div>
+        <div class="col-3 hidden" id="fEndeWrap">
+          <label for="fEnde">Wiederholen bis (optional)</label>
+          <input type="date" id="fEnde">
+        </div>
+        <div class="col-3" id="fStatusWrap">
+          <label for="fStatus">Status</label>
+          <select id="fStatus">
+            <option value="OK">Bestätigt</option>
+            <option value="GEPLANT">Geplant (im Voraus)</option>
+          </select>
+        </div>
+        <div class="col-3"></div>
+        <div class="col-6">
+          <label>Belege (Rechnung, Quittung, Foto …)</label>
+          <button id="btnBeleg" type="button">📎 Belege anhängen</button>
+          <ul id="belegPreview" class="filelist"></ul>
+        </div>
+        <div class="col-6" style="text-align:right">
+          <span id="anteilInfo" class="muted"></span>&nbsp;
+          <button id="btnAbbrechen" class="hidden">Abbrechen</button>
+          <button id="btnSpeichern" class="primary">💾 Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel no-print" id="vorlagenPanel">
+      <h2>🔁 Wiederkehrende Ausgaben (Vorlagen)</h2>
+      <p class="muted" style="margin-top:0">
+        Fällige Ausgaben (z. B. Gebäudeversicherung, Serviceabo) werden bis Ende Jahr automatisch als
+        <span class="badge geplant">geplant</span> in die Liste gestellt – dort nur noch mit ✔ bestätigen
+        (und ggf. Beleg anhängen). Neue Vorlage: im Formular oben bei «Wiederholung» ein Intervall wählen;
+        das Datum gilt als erste Fälligkeit.
+      </p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Aktiv</th><th>Beschreibung</th><th>Lieferant</th>
+            <th class="num">Betrag</th><th class="num">Unterhalt</th><th class="num">Wertverm.</th>
+            <th>Intervall</th><th>Nächste Fälligkeit</th><th>Ende</th><th></th></tr></thead>
+          <tbody id="vorlagenBody"></tbody>
+        </table>
+      </div>
+      <p id="vorlagenEmpty" class="muted">Noch keine Vorlagen.</p>
+    </div>
+
+    <div class="panel">
+      <div class="flexrow no-print" style="margin-bottom:0.8rem">
+        <div>
+          <label for="filterJahr">Jahr filtern</label>
+          <select id="filterJahr"><option value="">Alle Jahre</option></select>
+        </div>
+        <div>
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">Alle</option>
+            <option value="OK">Bestätigt</option>
+            <option value="GEPLANT">Geplant</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <label for="filterText">Suche</label>
+          <input type="text" id="filterText" placeholder="Beschreibung, Lieferant, Notizen …">
+        </div>
+        <div>
+          <button id="btnExcel" title="ausgaben.csv im Datenordner – direkt mit Excel öffnenbar">📄 CSV-Info</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="listTable">
+          <thead>
+            <tr>
+              <th>Datum</th><th>Beschreibung</th><th>Lieferant</th><th>Kategorie</th>
+              <th class="num">Betrag</th><th class="num">Unterhalt</th><th class="num">Wertverm.</th>
+              <th>Status</th><th>Belege</th><th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="listBody"></tbody>
+        </table>
+      </div>
+      <p id="emptyMsg" class="muted">Noch keine Einträge.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: JAHRESRECHNUNG ============ -->
+  <section id="viewJahr" class="hidden">
+    <div class="panel">
+      <div class="flexrow no-print" style="margin-bottom:1rem">
+        <div>
+          <label for="jahrSelect">Steuerjahr</label>
+          <select id="jahrSelect"></select>
+        </div>
+        <div>
+          <label for="emw">Eigenmietwert / Mietertrag CHF (für Pauschalvergleich)</label>
+          <input type="number" id="emw" step="1" min="0" placeholder="z. B. 18000">
+        </div>
+        <div>
+          <label for="pauschalSatz">Pauschalabzug</label>
+          <select id="pauschalSatz">
+            <option value="20">20 % (Gebäude älter als 10 Jahre)</option>
+            <option value="10">10 % (Gebäude bis 10 Jahre)</option>
+          </select>
+        </div>
+        <div>
+          <button id="btnPrintJahr" class="primary">🖨️ Drucken / PDF</button>
+        </div>
+      </div>
+
+      <h2 id="jahrTitel">Jahresrechnung</h2>
+      <div class="kpis">
+        <div class="kpi grey"><div class="l">Total Ausgaben</div><div class="v" id="kTotal">–</div></div>
+        <div class="kpi green"><div class="l">Abzugsfähig (Unterhalt)</div><div class="v" id="kUnterhalt">–</div></div>
+        <div class="kpi blue"><div class="l">Wertvermehrend (Verkauf)</div><div class="v" id="kWert">–</div></div>
+        <div class="kpi grey"><div class="l">Nicht steuerrelevant</div><div class="v" id="kNix">–</div></div>
+      </div>
+      <p id="jahrGeplantHint" class="muted hidden"></p>
+      <p id="hypoInfo" class="muted hidden"></p>
+
+      <div id="pauschaleBox" class="pauschale-box hidden"></div>
+
+      <h2 style="margin-top:1.4rem">Detail – abzugsfähige Unterhaltskosten (Beilage Steuererklärung)</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Datum</th><th>Beschreibung</th><th>Lieferant</th><th class="num">Betrag CHF</th><th class="num">Anteil %</th><th class="num">Abzug CHF</th><th>Beleg</th></tr></thead>
+          <tbody id="jahrBody"></tbody>
+          <tfoot><tr><th colspan="5" style="text-align:right">Total Liegenschaftsunterhalt</th><th class="num" id="jahrTotal"></th><th></th></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB: BUDGET ============ -->
+  <section id="viewBudget" class="hidden">
+    <div class="panel">
+      <div class="flexrow no-print" style="margin-bottom:1rem">
+        <div>
+          <label for="budgetJahr">Budgetjahr</label>
+          <select id="budgetJahr"></select>
+        </div>
+        <div style="flex:1"></div>
+        <div><button id="btnPrintBudget" class="primary">🖨️ Drucken / PDF</button></div>
+      </div>
+
+      <h2 id="budgetTitel">Budget &amp; Ausgabenplanung</h2>
+      <div class="kpis">
+        <div class="kpi grey"><div class="l">Budget total</div><div class="v" id="kBudget">–</div></div>
+        <div class="kpi green"><div class="l">Ausgegeben (bestätigt)</div><div class="v" id="kBudgetIst">–</div></div>
+        <div class="kpi blue"><div class="l">Geplant (offen)</div><div class="v" id="kBudgetGeplant">–</div></div>
+        <div class="kpi grey"><div class="l">Prognose Jahresende</div><div class="v" id="kBudgetPrognose">–</div></div>
+        <div class="kpi green" id="kBudgetRestBox"><div class="l">Verbleibend</div><div class="v" id="kBudgetRest">–</div></div>
+      </div>
+      <p class="muted no-print">
+        Budget pro Kategorie eintragen – wird automatisch gespeichert. «Geplant» stammt aus den
+        wiederkehrenden bzw. im Voraus erfassten Ausgaben; Prognose = ausgegeben + geplant.
+      </p>
+
+      <h3>Budget nach Kategorie</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Kategorie</th><th class="num">Budget CHF</th><th class="num">Ausgegeben</th>
+            <th class="num">Geplant</th><th class="num">Prognose</th><th class="num">Verbleibend</th><th>Auslastung</th></tr></thead>
+          <tbody id="budgetKatBody"></tbody>
+          <tfoot><tr id="budgetKatFoot"></tr></tfoot>
+        </table>
+      </div>
+
+      <h3>Projekte (Budget über alle Jahre)</h3>
+      <p class="muted no-print">
+        Für Umbauten und Renovationen: Beim Erfassen einer Ausgabe im Feld «Projekt» den Projektnamen
+        wählen – hier siehst du das Projektbudget über alle Jahre hinweg.
+      </p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Projekt</th><th class="num">Budget CHF</th><th class="num">Ausgegeben</th>
+            <th class="num">Geplant</th><th class="num">Verbleibend</th><th>Auslastung</th><th class="no-print"></th></tr></thead>
+          <tbody id="projektBody"></tbody>
+        </table>
+      </div>
+      <div class="flexrow no-print" style="margin-top:0.6rem">
+        <div>
+          <label for="neuProjekt">Neues Projekt anlegen</label>
+          <input type="text" id="neuProjekt" placeholder="z. B. Badumbau 2027">
+        </div>
+        <div><button id="btnNeuProjekt">➕ Hinzufügen</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: VERKAUFSDOSSIER ============ -->
+  <section id="viewVerkauf" class="hidden">
+    <div class="panel">
+      <div class="flexrow no-print" style="margin-bottom:1rem">
+        <div style="flex:1">
+          <p class="muted" style="margin:0">
+            Alle wertvermehrenden Aufwendungen über sämtliche Jahre. Diese zählen beim Verkauf zu den
+            <b>Anlagekosten</b> und reduzieren die Grundstückgewinnsteuer (Kanton Aargau).
+            Belege dafür <b>unbefristet aufbewahren</b>.
+          </p>
+        </div>
+        <div><button id="btnPrintVerkauf" class="primary">🖨️ Drucken / PDF</button></div>
+      </div>
+      <h2>Dossier Grundstückgewinnsteuer – wertvermehrende Investitionen</h2>
+      <p id="verkaufGeplantHint" class="muted hidden"></p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Datum</th><th>Beschreibung</th><th>Lieferant</th><th class="num">Betrag CHF</th><th class="num">Anteil %</th><th class="num">Anrechenbar CHF</th><th>Beleg</th></tr></thead>
+          <tbody id="verkaufBody"></tbody>
+          <tfoot><tr><th colspan="5" style="text-align:right">Total anrechenbare Anlagekosten</th><th class="num" id="verkaufTotal"></th><th></th></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/basis.js"></script>
+<script src="js/speicher.js"></script>
+<script src="js/wiederkehrend.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
