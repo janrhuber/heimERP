@@ -1,6 +1,6 @@
 # heimERP – Liegenschaftskosten & Steuerabzüge (Kanton Aargau)
 
-Ein lokales Browser-Tool (eine einzige HTML-Datei, keine Installation, keine Cloud) zur Verwaltung
+Ein lokales Browser-Tool (keine Installation, kein Server, keine Cloud) zur Verwaltung
 aller Ausgaben rund ums Haus – für die Steuererklärung und für das spätere Verkaufsdossier
 (Grundstückgewinnsteuer).
 
@@ -11,6 +11,19 @@ aller Ausgaben rund ums Haus – für die Steuererklärung und für das spätere
 2. Oben rechts **«Datenordner wählen»** klicken und einen Ordner wählen/erstellen,
    z. B. `C:\git\heimERP\Daten`.
 3. Beim nächsten Öffnen: **«Erneut verbinden»** klicken – fertig.
+
+## Projektstruktur
+
+```
+heimERP.html          ← Einstiegspunkt (diese Datei öffnen)
+styles.css            ← Layout
+js/basis.js           ← Konstanten, Kategorien, CSV-Logik
+js/speicher.js        ← Dateizugriff (Ordner, CSV, Belege)
+js/wiederkehrend.js   ← wiederkehrende Ausgaben
+js/app.js             ← Formular, Auswertungen, Bedienung
+```
+
+Die Dateien gehören zusammen – beim Weitergeben/Verschieben immer den ganzen Ordner nehmen.
 
 ## Was das Tool anlegt
 
