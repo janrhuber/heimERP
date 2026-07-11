@@ -71,6 +71,12 @@ sinnvoll umbenannt und im Eintrag verlinkt (Klick auf 📄 öffnet den Beleg).
 
 ## Steuerliche Kurzübersicht Aargau (ohne Gewähr)
 
+> **Hinweis:** Dieses Tool ersetzt keine Steuerberatung. Massgebend sind die aktuellen
+> Gesetze und die Wegleitung des Kantonalen Steueramts Aargau. Sätze und Regeln können
+> ändern (z. B. Abschaffung des Eigenmietwerts) – im Zweifel dort nachschlagen oder
+> eine Fachperson beiziehen. Für die Richtigkeit der Berechnungen wird keine Haftung
+> übernommen.
+
 - **Werterhaltender Unterhalt** (Reparaturen, gleichwertiger Ersatz, Service, Sachversicherungen
   der Liegenschaft, Verwaltungskosten) ist vom steuerbaren Einkommen **abziehbar**.
 - **Pauschalabzug statt effektiver Kosten:** jedes Jahr frei wählbar –
@@ -92,3 +98,7 @@ Alles liegt als normale Dateien im Datenordner – einfach den ganzen Ordner
 (z. B. `Daten\`) regelmässig sichern (OneDrive, externe Festplatte, …).
 Die CSV kann jederzeit in Excel geöffnet werden; Änderungen dort bitte nur machen,
 wenn heimERP geschlossen ist.
+
+## Lizenz
+
+MIT – siehe [LICENSE](LICENSE). Nutzung auf eigene Verantwortung.
