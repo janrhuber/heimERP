@@ -67,7 +67,8 @@ function renderBelegPreview() {
 }
 
 async function pickReceipts() {
-  if (!dirHandle) { alert("Bitte zuerst den Datenordner verbinden."); return; }
+  if (!istVerbunden()) { alert(serverModus ? "Bitte zuerst anmelden." : "Bitte zuerst den Datenordner verbinden."); return; }
+  if (serverModus || !window.showOpenFilePicker) { $("belegInput").click(); return; }
   try {
     const handles = await window.showOpenFilePicker({ multiple: true });
     for (const h of handles) pendingFiles.push(await h.getFile());
@@ -78,6 +79,7 @@ async function pickReceipts() {
 function resetForm() {
   editId = null;
   editVorlageId = null;
+  aktiveEingangId = null;
   pendingFiles = []; pendingExisting = [];
   $("formTitle").textContent = "Neue Ausgabe erfassen";
   $("btnAbbrechen").classList.add("hidden");
@@ -121,7 +123,7 @@ function startEdit(id) {
 }
 
 async function saveEntry() {
-  if (!dirHandle) { alert("Bitte zuerst den Datenordner verbinden."); return; }
+  if (!istVerbunden()) { alert(serverModus ? "Bitte zuerst anmelden." : "Bitte zuerst den Datenordner verbinden."); return; }
   const datum = $("fDatum").value;
   const beschreibung = $("fBeschreibung").value.trim();
   const betrag = parseFloat($("fBetrag").value);
@@ -190,6 +192,8 @@ async function saveEntry() {
   } else entries.push(obj);
   entries.sort((a, b) => a.datum < b.datum ? -1 : 1);
   await saveCSV();
+  /* vor resetForm, das aktiveEingangId nullt */
+  if (serverModus && aktiveEingangId) await markiereEingangErledigt(obj.id);
   resetForm();
   renderAll();
 }
@@ -500,7 +504,7 @@ function renderAll() {
 
 /* ================= Tabs & Events ================= */
 function showTab(name) {
-  for (const t of ["Erfassen", "Jahr", "Budget", "Verkauf"]) {
+  for (const t of ["Erfassen", "Jahr", "Budget", "Verkauf", "Eingang"]) {
     $("view" + t).classList.toggle("hidden", t !== name);
     $("tab" + t).classList.toggle("active", t === name);
   }
@@ -535,14 +539,12 @@ document.addEventListener("change", ev => {
   }
 });
 
-window.addEventListener("DOMContentLoaded", () => {
-  if (!window.showDirectoryPicker) {
-    $("startHint").innerHTML = "<b>⚠ Browser nicht unterstützt.</b> Bitte diese Datei mit <b>Microsoft Edge</b> oder <b>Google Chrome</b> öffnen (Firefox unterstützt den lokalen Dateizugriff nicht).";
-    $("btnFolder").disabled = true;
-    return;
-  }
+/* ================= Start ================= */
+
+/* Verdrahtung, die in beiden Modi gilt */
+function wireCommonUI() {
+
   initForm();
-  $("btnFolder").onclick = chooseFolder;
   $("btnSpeichern").onclick = saveEntry;
   $("btnAbbrechen").onclick = () => { resetForm(); };
   $("btnBeleg").onclick = pickReceipts;
@@ -583,5 +585,55 @@ window.addEventListener("DOMContentLoaded", () => {
     "• Belege liegen unter Belege\\<Jahr>\\ und sind in der Spalte «Belege» verlinkt\n\n" +
     "Tipp: Excel-Änderungen nur bei geschlossenem heimERP machen und danach hier neu verbinden."
   );
+  $("tabEingang").onclick = () => { showTab("Eingang"); ladeEingang(); };
+  /* Fallback-Dateiauswahl: greift im Server-Modus und auf Geräten ohne
+     File-System-Access-API (Handy, Tablet, Firefox). */
+  $("belegInput").onchange = () => {
+    for (const f of $("belegInput").files) pendingFiles.push(f);
+    $("belegInput").value = "";
+    renderBelegPreview();
+  };
+}
+
+/* Ordner-Modus: die bisherige Betriebsart, lokaler Datenordner im Browser */
+function startFolderMode() {
+  if (!window.showDirectoryPicker) {
+    $("startHint").innerHTML = "<b>⚠ Browser nicht unterstützt.</b> Bitte diese Datei mit <b>Microsoft Edge</b> oder <b>Google Chrome</b> öffnen (Firefox unterstützt den lokalen Dateizugriff nicht).";
+    $("btnFolder").disabled = true;
+    return;
+  }
+  $("btnFolder").onclick = chooseFolder;
   tryReconnect();
+}
+
+/* Server-Modus: das Backend aus server/ liefert die Daten.
+   st.extern sagt, ob wir über den öffentlichen Proxy hereinkommen – dann gibt
+   es nur den Eingang, und die Oberfläche wird gar nicht erst voll aufgebaut. */
+function startServerMode(st) {
+  serverModus = true;
+  externerZugang = !!st.extern;
+  $("btnFolder").classList.add("hidden");
+  $("btnExcel").classList.add("hidden");
+  $("startHint").classList.add("hidden");
+  $("loginForm").onsubmit = login;
+  $("btnLogout").onclick = logout;
+  initEingangUI();
+  if (st.angemeldet && st.benutzer) anmeldungErfolgreich(st.benutzer);
+  else zeigeLogin();
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  wireCommonUI();
+  /* Modus-Erkennung: antwortet ein Backend auf /api/status, läuft die App im
+     Server-Modus, sonst (file://, statisches Hosting) wie bisher lokal. */
+  let st = null;
+  try {
+    const r = await fetch("/api/status");
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.server === true) st = j;
+    }
+  } catch {}
+  if (st) startServerMode(st);
+  else startFolderMode();
 });

@@ -34,6 +34,16 @@ let editVorlageId = null;    // gerade bearbeitete Vorlage
 let pendingFiles = [];       // neu angehängte File-Objekte (noch nicht kopiert)
 let pendingExisting = [];    // bereits gespeicherte Belegpfade beim Bearbeiten
 
+/* ===== Server-Modus =====
+   Die App läuft entweder gegen einen lokalen Ordner (File System Access API)
+   oder gegen das Backend in server/. Erkannt wird das beim Start über
+   /api/status – siehe app.js. */
+let serverModus = false;     // true = Backend statt lokalem Ordner
+let currentUser = null;      // { name } nach Login (nur Server-Modus)
+let csvEtag = null;          // ETag der zuletzt gelesenen ausgaben.csv (Schutz vor verlorenen Updates)
+let externerZugang = false;  // true = über den öffentlichen Proxy erreicht, nur Eingang verfügbar
+let aktiveEingangId = null;  // Eingang-Posten, der gerade ins Formular übernommen wird
+
 /* ================= Hilfsfunktionen ================= */
 const $ = id => document.getElementById(id);
 const chf = n => (isFinite(n) ? n : 0).toLocaleString("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -44,6 +54,19 @@ function setStatus(msg, cls) {
   const s = $("status");
   s.textContent = msg;
   s.className = cls || "";
+}
+
+/* Verbindungs-Status unabhängig vom Speicher-Modus (Ordner oder Server) */
+function istVerbunden() {
+  return serverModus ? !!currentUser : !!dirHandle;
+}
+
+function speicherName() {
+  return serverModus ? "Server" : (dirHandle ? dirHandle.name : "–");
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function sanitizeFilename(s) {

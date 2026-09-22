@@ -51,6 +51,7 @@ async function tryReconnect() {
 }
 
 async function readFileText(name) {
+  if (serverModus) return serverReadFileText(name);
   try {
     const fh = await dirHandle.getFileHandle(name);
     return await (await fh.getFile()).text();
@@ -58,6 +59,7 @@ async function readFileText(name) {
 }
 
 async function writeFileText(name, text) {
+  if (serverModus) return serverWriteFileText(name, text);
   const fh = await dirHandle.getFileHandle(name, { create: true });
   const w = await fh.createWritable();
   await w.write(text);

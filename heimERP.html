@@ -13,6 +13,7 @@
   <div class="spacer"></div>
   <span id="status">Kein Datenordner verbunden</span>
   <button id="btnFolder" class="primary">📁 Datenordner wählen</button>
+  <button id="btnLogout" class="hidden">Abmelden</button>
 </header>
 
 <main>
@@ -29,6 +30,7 @@
     <button id="tabJahr">📊 Jahresrechnung</button>
     <button id="tabBudget">💰 Budget</button>
     <button id="tabVerkauf">🏠 Dossier Grundstückgewinnsteuer</button>
+    <button id="tabEingang" class="hidden">📥 Eingang</button>
   </div>
 
   <!-- ============ TAB 1: ERFASSEN ============ -->
@@ -313,10 +315,90 @@
     </div>
   </section>
 
+  <!-- ============ ANMELDUNG (nur Server-Modus) ============ -->
+  <section id="viewLogin" class="hidden">
+    <div class="panel" style="max-width:24rem">
+      <h2>Anmelden</h2>
+      <form id="loginForm">
+        <div>
+          <label for="loginName">Name</label>
+          <input type="text" id="loginName" autocomplete="username" required>
+        </div>
+        <div>
+          <label for="loginPasswort">Passwort</label>
+          <input type="password" id="loginPasswort" autocomplete="current-password" required>
+        </div>
+        <p id="loginFehler" class="err"></p>
+        <button type="submit" class="primary">Anmelden</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ EINGANG: Belege von unterwegs ============ -->
+  <section id="viewEingang" class="hidden">
+    <div class="panel no-print">
+      <h2>Beleg hochladen</h2>
+      <p class="muted">
+        Für unterwegs: Rechnung oder Quittung abfotografieren, kurz beschreiben, fertig.
+        Kategorie, Steueranteil und Projekt kommen später zu Hause dazu.
+        <b>Betrag und Lieferant sind optional</b> – wichtig ist, dass der Beleg gesichert ist.
+      </p>
+      <div class="flexrow">
+        <div style="flex:2">
+          <label for="egBeschreibung">Beschreibung *</label>
+          <input type="text" id="egBeschreibung" placeholder="z. B. Ersatz Boiler">
+        </div>
+        <div style="flex:1">
+          <label for="egLieferant">Handwerker / Lieferant</label>
+          <input type="text" id="egLieferant" placeholder="z. B. Sanitär Müller">
+        </div>
+      </div>
+      <div class="flexrow">
+        <div>
+          <label for="egDatum">Datum</label>
+          <input type="date" id="egDatum">
+        </div>
+        <div>
+          <label for="egBetrag">Betrag CHF</label>
+          <input type="number" id="egBetrag" step="0.05" placeholder="optional">
+        </div>
+        <div style="flex:1">
+          <label>Beleg *</label>
+          <button id="btnEgDatei" type="button">📎 Foto oder PDF wählen</button>
+          <span id="egDateiName" class="muted"></span>
+          <input type="file" id="egDateiInput" class="hidden" accept="image/*,application/pdf" capture="environment">
+        </div>
+      </div>
+      <button id="btnEingangSenden" class="primary">Hochladen</button>
+    </div>
+
+    <div class="panel">
+      <h2>Bereits hochgeladen</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th><th>Beschreibung</th><th>Lieferant</th>
+              <th class="num">Betrag CHF</th><th>Beleg</th><th>Status</th>
+              <th class="eg-aktion">Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="egListeBody"></tbody>
+        </table>
+      </div>
+      <p id="egListeEmpty" class="muted">Noch nichts hochgeladen.</p>
+    </div>
+  </section>
+
 </main>
+
+<input type="file" id="belegInput" class="hidden" multiple accept="image/*,application/pdf">
 
 <script src="js/basis.js"></script>
 <script src="js/speicher.js"></script>
+<script src="js/speicher-server.js"></script>
+<script src="js/anmeldung.js"></script>
+<script src="js/eingang.js"></script>
 <script src="js/wiederkehrend.js"></script>
 <script src="js/app.js"></script>
 </body>

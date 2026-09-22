@@ -13,7 +13,7 @@ function addMonthsISO(iso, months, tag) {
 
 /* Erzeugt fällige Ausgaben bis Ende des laufenden Jahres als «geplant» */
 async function generateRecurring() {
-  if (!dirHandle) return 0;
+  if (!istVerbunden()) return 0;
   const horizon = new Date().getFullYear() + "-12-31";
   let created = 0, guard = 0;
   for (const t of settings.vorlagen) {
@@ -125,7 +125,7 @@ function geplantHint(list, elId) {
 
 async function saveCSV() {
   await writeFileText(CSV_NAME, toCSV());
-  setStatus("✔ Gespeichert: " + dirHandle.name + " (" + entries.length + " Einträge)", "ok");
+  setStatus("✔ Gespeichert: " + speicherName() + " (" + entries.length + " Einträge)", "ok");
 }
 
 async function saveSettings() {
@@ -136,6 +136,7 @@ async function saveSettings() {
    Dateiname: JJMMTT_Beschreibung_Lieferant[_Typ], z. B. 260712_Ersatz_Boiler_Sanitaer_Mueller_Rechnung.pdf.
    Typ (Rechnung/Quittung/…) wird aus dem Original-Dateinamen übernommen, falls erkennbar. */
 async function storeReceipt(file, jahr, datum, beschreibung, lieferant) {
+  if (serverModus) return serverStoreReceipt(file, jahr, datum, beschreibung, lieferant);
   const belegRoot = await dirHandle.getDirectoryHandle(BELEG_DIR, { create: true });
   const yearDir = await belegRoot.getDirectoryHandle(String(jahr), { create: true });
   const dot = file.name.lastIndexOf(".");
@@ -158,6 +159,7 @@ async function storeReceipt(file, jahr, datum, beschreibung, lieferant) {
 }
 
 async function openReceipt(relPath) {
+  if (serverModus) return serverOpenReceipt(relPath);
   try {
     const parts = relPath.split("/");
     let dh = dirHandle;
