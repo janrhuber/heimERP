@@ -1,2 +1,27 @@
-# Lokale Daten (CSV, Belege, Einstellungen) nicht versionieren
+# ============================================================
+# Hausdaten NIEMALS versionieren – dieses Repo ist oeffentlich.
+# In Produktion liegen die Daten ohnehin ausserhalb des Checkouts
+# (DATEN_DIR=/var/lib/heimerp/daten), diese Regeln sind das Netz
+# fuer den lokalen Ordner-Modus.
+# ============================================================
 Daten/
+daten/
+
+# Einzelne Artefakte – falls DATEN_DIR je in den Checkout zeigt
+benutzer.json
+ausgaben.csv
+einstellungen.json
+eingang.json
+.session-geheimnis
+.sitzungen/
+Belege/
+Eingang/
+
+# Abhaengigkeiten
+node_modules/
+server/node_modules/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
