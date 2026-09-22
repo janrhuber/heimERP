@@ -33,17 +33,24 @@ Daten\
 ├── einstellungen.json    ← Eigenmietwert & Pauschalsatz pro Jahr
 └── Belege\
     ├── 2025\
-    │   └── Ersatz_Boiler_Rechnung.pdf
+    │   └── 250712_Ersatz_Boiler_Sanitaer_Mueller_Rechnung.pdf
     └── 2026\
         └── ...
 ```
 
 Angehängte Rechnungen/Quittungen werden automatisch nach `Belege\<Jahr>\` **kopiert**,
-sinnvoll umbenannt und im Eintrag verlinkt (Klick auf 📄 öffnet den Beleg).
+einheitlich umbenannt und im Eintrag verlinkt (Klick auf 📄 öffnet den Beleg).
+Namensschema: `JJMMTT_Beschreibung_Lieferant[_Typ]` – Datum aus dem Eintrag,
+Typ (Rechnung/Quittung/Lieferschein/…) wird aus dem Original-Dateinamen übernommen,
+falls erkennbar; bei Namenskonflikten wird `_2`, `_3` … angehängt.
 
 ## Funktionen
 
 - **Erfassen:** Datum, Beschreibung, Handwerker/Lieferant, Kategorie, Betrag, Belege, Notizen.
+  Negative Beträge = Gutschriften (z. B. Einspeisevergütung PV).
+- **Filtern:** Liste nach Jahr, Status, **Steuerwirkung** (abzugsfähig / wertvermehrend /
+  gemischt / nicht steuerrelevant), Kategorie, Projekt und Volltext filtern –
+  mit Summenzeile (Total, Abzug Unterhalt, wertvermehrend) der angezeigten Einträge.
 - **Prozentuale Aufteilung** pro Eintrag:
   - **Abzug Unterhalt %** → werterhaltender Anteil, abziehbar in der Steuererklärung.
   - **Wertvermehrend %** → zählt beim Verkauf zu den Anlagekosten (Grundstückgewinnsteuer).

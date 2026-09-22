@@ -132,13 +132,19 @@ async function saveSettings() {
   await writeFileText(SETTINGS_NAME, JSON.stringify(settings, null, 2));
 }
 
-/* Beleg in Belege/<Jahr>/ kopieren, gibt relativen Pfad zurück */
-async function storeReceipt(file, jahr, beschreibung) {
+/* Beleg in Belege/<Jahr>/ kopieren, gibt relativen Pfad zurück.
+   Dateiname: JJMMTT_Beschreibung_Lieferant[_Typ], z. B. 260712_Ersatz_Boiler_Sanitaer_Mueller_Rechnung.pdf.
+   Typ (Rechnung/Quittung/…) wird aus dem Original-Dateinamen übernommen, falls erkennbar. */
+async function storeReceipt(file, jahr, datum, beschreibung, lieferant) {
   const belegRoot = await dirHandle.getDirectoryHandle(BELEG_DIR, { create: true });
   const yearDir = await belegRoot.getDirectoryHandle(String(jahr), { create: true });
   const dot = file.name.lastIndexOf(".");
   const ext = dot >= 0 ? file.name.slice(dot) : "";
-  let base = sanitizeFilename(beschreibung) + "_" + sanitizeFilename(file.name.slice(0, dot >= 0 ? dot : undefined));
+  const jjmmtt = String(datum || "").replace(/-/g, "").slice(2, 8);
+  const typ = (file.name.match(/quittung|rechnung|lieferschein|gutschrift|offerte|vertrag|beleg/i) || [])[0];
+  let base = jjmmtt + "_" + sanitizeFilename(beschreibung).slice(0, 40).replace(/_+$/, "");
+  if (lieferant) base += "_" + sanitizeFilename(lieferant).slice(0, 25).replace(/_+$/, "");
+  if (typ) base += "_" + typ[0].toUpperCase() + typ.slice(1).toLowerCase();
   let name = base + ext, n = 1;
   while (true) {
     try { await yearDir.getFileHandle(name); name = base + "_" + (++n) + ext; }

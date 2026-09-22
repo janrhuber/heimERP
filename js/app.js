@@ -127,8 +127,8 @@ async function saveEntry() {
   const betrag = parseFloat($("fBetrag").value);
   const pU = parseFloat($("fUnterhalt").value) || 0;
   const pW = parseFloat($("fWert").value) || 0;
-  if (!datum || !beschreibung || !isFinite(betrag) || betrag <= 0) {
-    alert("Bitte Datum, Beschreibung und Betrag ausfüllen."); return;
+  if (!datum || !beschreibung || !isFinite(betrag) || betrag === 0) {
+    alert("Bitte Datum, Beschreibung und Betrag ausfüllen (negativ = Gutschrift)."); return;
   }
   if (pU + pW > 100) { alert("Unterhalt % + wertvermehrend % dürfen zusammen max. 100 % sein."); return; }
 
@@ -167,7 +167,7 @@ async function saveEntry() {
 
   const jahr = parseInt(datum.slice(0, 4));
   const belege = [...pendingExisting];
-  for (const f of pendingFiles) belege.push(await storeReceipt(f, jahr, beschreibung));
+  for (const f of pendingFiles) belege.push(await storeReceipt(f, jahr, datum, beschreibung, $("fLieferant").value.trim()));
 
   const alt = editId ? entries.find(x => x.id === editId) : null;
   const obj = {
@@ -221,15 +221,29 @@ function belegLinks(e) {
 function renderList() {
   const jahrF = $("filterJahr").value;
   const statusF = $("filterStatus").value;
+  const steuerF = $("filterSteuer").value;
+  const katF = $("filterKategorie").value;
+  const projF = $("filterProjekt").value;
   const txt = $("filterText").value.toLowerCase();
   const body = $("listBody");
   body.innerHTML = "";
-  let shown = 0;
+  let shown = 0, sumB = 0, sumU = 0, sumW = 0, sumGeplant = 0;
   for (const e of [...entries].reverse()) {
     if (jahrF && String(e.jahr) !== jahrF) continue;
     if (statusF && e.status !== statusF) continue;
-    if (txt && !(e.beschreibung + " " + e.lieferant + " " + e.notizen + " " + e.kategorie).toLowerCase().includes(txt)) continue;
+    if (katF && e.kategorie !== katF) continue;
+    if (projF === "-" && e.projekt) continue;
+    if (projF && projF !== "-" && e.projekt !== projF) continue;
+    if (steuerF === "U" && !(e.pUnterhalt > 0)) continue;
+    if (steuerF === "W" && !(e.pWert > 0)) continue;
+    if (steuerF === "G" && !(e.pUnterhalt > 0 && e.pWert > 0)) continue;
+    if (steuerF === "N" && (e.pUnterhalt > 0 || e.pWert > 0)) continue;
+    if (txt && !(e.beschreibung + " " + e.lieferant + " " + e.notizen + " " + e.kategorie + " " + (e.projekt || "")).toLowerCase().includes(txt)) continue;
     shown++;
+    sumB += e.betrag;
+    sumU += e.betrag * e.pUnterhalt / 100;
+    sumW += e.betrag * e.pWert / 100;
+    if (e.status === "GEPLANT") sumGeplant++;
     const geplant = e.status === "GEPLANT";
     const tr = document.createElement("tr");
     if (geplant) tr.className = "geplant";
@@ -253,6 +267,37 @@ function renderList() {
   }
   $("emptyMsg").classList.toggle("hidden", shown > 0);
   $("emptyMsg").textContent = entries.length ? "Keine Einträge für diesen Filter." : "Noch keine Einträge.";
+  $("listSummary").textContent = shown
+    ? `${shown} Einträge · Total CHF ${chf(sumB)} · Abzug Unterhalt CHF ${chf(sumU)} · wertvermehrend CHF ${chf(sumW)}` +
+      (sumGeplant ? ` · davon ${sumGeplant} geplant (in Auswertungen nicht gezählt)` : "")
+    : "";
+}
+
+/* Kategorie- und Projekt-Filter füllen (Auswahl bleibt erhalten) */
+function fillFilterSelects() {
+  const kats = KATEGORIEN.map(k => k.name);
+  for (const e of entries) if (e.kategorie && !kats.includes(e.kategorie)) kats.push(e.kategorie);
+  const selK = $("filterKategorie");
+  const prevK = selK.value;
+  selK.innerHTML = '<option value="">Alle</option>';
+  kats.forEach(n => {
+    const o = document.createElement("option");
+    o.value = n; o.textContent = n;
+    selK.appendChild(o);
+  });
+  if (prevK && [...selK.options].some(o => o.value === prevK)) selK.value = prevK;
+
+  const projs = new Set(Object.keys(settings.projektBudgets));
+  entries.forEach(e => { if (e.projekt) projs.add(e.projekt); });
+  const selP = $("filterProjekt");
+  const prevP = selP.value;
+  selP.innerHTML = '<option value="">Alle</option><option value="-">(ohne Projekt)</option>';
+  [...projs].sort().forEach(n => {
+    const o = document.createElement("option");
+    o.value = n; o.textContent = "📁 " + n;
+    selP.appendChild(o);
+  });
+  if (prevP && [...selP.options].some(o => o.value === prevP)) selP.value = prevP;
 }
 
 function escapeHtml(s) {
@@ -445,6 +490,7 @@ function renderBudget() {
 
 function renderAll() {
   fillYearSelects();
+  fillFilterSelects();
   renderVorlagen();
   renderList();
   renderJahr();
@@ -502,6 +548,9 @@ window.addEventListener("DOMContentLoaded", () => {
   $("btnBeleg").onclick = pickReceipts;
   $("filterJahr").onchange = renderList;
   $("filterStatus").onchange = renderList;
+  $("filterSteuer").onchange = renderList;
+  $("filterKategorie").onchange = renderList;
+  $("filterProjekt").onchange = renderList;
   $("filterText").oninput = renderList;
   $("tabErfassen").onclick = () => showTab("Erfassen");
   $("tabJahr").onclick = () => { showTab("Jahr"); renderJahr(); };

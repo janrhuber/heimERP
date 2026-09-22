@@ -141,6 +141,24 @@
             <option value="GEPLANT">Geplant</option>
           </select>
         </div>
+        <div>
+          <label for="filterSteuer">Steuerwirkung</label>
+          <select id="filterSteuer">
+            <option value="">Alle</option>
+            <option value="U">abzugsfähig (Unterhalt)</option>
+            <option value="W">wertvermehrend</option>
+            <option value="G">gemischt</option>
+            <option value="N">nicht steuerrelevant</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterKategorie">Kategorie</label>
+          <select id="filterKategorie"><option value="">Alle</option></select>
+        </div>
+        <div>
+          <label for="filterProjekt">Projekt</label>
+          <select id="filterProjekt"><option value="">Alle</option></select>
+        </div>
         <div style="flex:1">
           <label for="filterText">Suche</label>
           <input type="text" id="filterText" placeholder="Beschreibung, Lieferant, Notizen …">
@@ -161,6 +179,7 @@
           <tbody id="listBody"></tbody>
         </table>
       </div>
+      <p id="listSummary" class="muted"></p>
       <p id="emptyMsg" class="muted">Noch keine Einträge.</p>
     </div>
   </section>
