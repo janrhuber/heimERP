@@ -109,3 +109,11 @@
     main { max-width: 100%; }
   }
 
+/* ================= Start =================
+   Bis die App weiss, ob sie im Server- oder Ordner-Modus läuft und ob
+   jemand angemeldet ist, bleibt alles ausser dem Titel verdeckt. Sonst
+   blitzt beim Aufruf von aussen kurz die komplette Oberfläche auf, bevor
+   das Login erscheint. app.js nimmt die Klasse nach der Entscheidung weg. */
+body.startet main,
+body.startet #status,
+body.startet header button { visibility: hidden; }

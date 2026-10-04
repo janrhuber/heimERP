@@ -634,6 +634,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (j && j.server === true) st = j;
     }
   } catch {}
-  if (st) startServerMode(st);
-  else startFolderMode();
+  try {
+    if (st) startServerMode(st);
+    else startFolderMode();
+  } finally {
+    /* auch bei einem Fehler aufdecken – lieber eine unfertige Seite als eine leere */
+    document.body.classList.remove("startet");
+  }
 });
