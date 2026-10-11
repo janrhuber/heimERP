@@ -11,10 +11,18 @@ Zeile hier ergänzen.
 | 001 | [Zugangsmodell](001-zugangsmodell.md) | extern/intern, `X-Zugang`, Whitelist, Schichten | `server/hilfen.js`, `server/app.js` | Aktiv |
 | 002 | [Eingang und «Beleg hochladen»](002-eingang.md) | unterwegs hochladen, zu Hause als Eintrag übernehmen | `server/eingang.js`, `hochladen.html`, `js/eingang.js` | Aktiv |
 | 003 | [Versionsanzeige](003-versionsanzeige.md) | Release-Tag und Commit im App-Kopf | `server/version.js` | Aktiv |
+| 004 | [Speichermodi und Datenformat](004-speichermodi.md) | Ordner- und Server-Modus, Moduswahl, CSV-Spalten, Konfliktschutz | `js/speicher*.js`, `server/ausgaben.js` | Aktiv |
+| 005 | [Erfassen und Liste](005-erfassen-liste.md) | Felder, Aufteilung Unterhalt/wertvermehrend, Kategorien, Status, Filter | `js/app.js`, `js/basis.js` | Aktiv |
+| 006 | [Belegablage](006-belegablage.md) | Ablage unter `Belege/<Jahr>/`, Namensschema, Anzeige | `js/wiederkehrend.js`, `server/belege.js` | Aktiv |
+| 007 | [Wiederkehrende Ausgaben](007-wiederkehrende-ausgaben.md) | Vorlagen, Intervalle, automatisch geplante Einträge | `js/wiederkehrend.js` | Aktiv |
+| 008 | [Jahresrechnung und Pauschalvergleich](008-jahresrechnung.md) | abzugsfähige Kosten pro Steuerjahr, effektiv vs. Pauschale | `js/app.js` | Aktiv |
+| 009 | [Budget und Projekte](009-budget-projekte.md) | Jahresbudget pro Kategorie, Projekte über mehrere Jahre | `js/app.js` | Aktiv |
+| 010 | [Dossier Grundstückgewinnsteuer](010-dossier-grundstueckgewinnsteuer.md) | wertvermehrende Investitionen über alle Jahre | `js/app.js` | Aktiv |
+| 011 | [Anmeldung und Benutzer](011-anmeldung-benutzer.md) | Login, Sitzungen, Rate-Limit, Benutzer-CLI | `server/auth.js` | Aktiv |
 
-## Noch ohne Spec
+## Bekannte Schwächen
 
-Die fachlichen Teile der App sind bisher nur im [README](../../README.md)
-beschrieben: Erfassen und Liste, wiederkehrende Ausgaben, Jahresrechnung mit
-Steuerabzug, Budget, Dossier Grundstückgewinnsteuer, Belegablage und die
-beiden Speichermodi. Wer dort etwas ändert, legt zuerst die Spec an (`/feature`).
+Beim Schreiben der Specs gegen den Code aufgefallen und in den jeweiligen
+«Offenen Punkten» festgehalten – die wichtigste: das Bearbeiten einer Vorlage
+löscht die geplanten Einträge des laufenden Jahres
+([007](007-wiederkehrende-ausgaben.md)).
