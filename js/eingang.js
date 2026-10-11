@@ -129,7 +129,10 @@ async function uebernehmeEingang(ids) {
   $("fBeschreibung").value = einmal(posten.map(x => x.beschreibung)).join(", ");
   $("fLieferant").value = einmal(posten.map(x => x.lieferant)).join(", ");
   if (betrag != null) $("fBetrag").value = betrag;
-  $("fStatus").value = "OFFEN";
+  /* Wer einen Beleg hat, hat bezahlt: der Eintrag ist bestätigt, nicht geplant.
+     (Früher stand hier "OFFEN" – den Wert kennt das Formular nicht, der
+     Status wurde leer gespeichert.) */
+  $("fStatus").value = "OK";
   pendingFiles.push(...files);
   renderBelegPreview();
   $("formTitle").textContent = posten.length > 1

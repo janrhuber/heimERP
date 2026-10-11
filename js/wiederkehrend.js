@@ -66,7 +66,13 @@ function startEditVorlage(id) {
   editVorlageId = id;
   $("formTitle").textContent = "Vorlage bearbeiten";
   $("btnAbbrechen").classList.remove("hidden");
-  $("fDatum").value = t.naechste || todayISO();
+  /* Beim Speichern werden die noch offenen geplanten Einträge gelöscht und ab
+     dem Datum im Formular neu erzeugt. Darum hier der früheste offene Termin –
+     nicht die gemerkte nächste Fälligkeit: die liegt nach dem Erzeugen meist
+     schon im Folgejahr, und die Einträge dieses Jahres wären weg. */
+  const offen = entries.filter(e => e.vorlage === id && e.status === "GEPLANT").map(e => e.datum).sort();
+  editVorlageDatum = offen[0] || t.naechste || todayISO();
+  $("fDatum").value = editVorlageDatum;
   $("fBeschreibung").value = t.beschreibung;
   $("fLieferant").value = t.lieferant;
   $("fBetrag").value = t.betrag;

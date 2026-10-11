@@ -6,6 +6,20 @@ nach [SemVer](https://semver.org/lang/de/). Neue Einträge zuerst unter
 
 ## [Unreleased]
 
+## [1.2.1] – 2026-10-11
+
+### Added
+- Specs für die fachlichen Teile der App (004–011)
+
+### Fixed
+- Das Bearbeiten einer wiederkehrenden Vorlage löschte die noch offenen
+  geplanten Einträge des laufenden Jahres; das Formular schlägt jetzt den
+  frühesten offenen Termin vor, und der gemerkte Tag im Monat bleibt erhalten
+- Eine Kategorie aus alten Daten wurde beim Bearbeiten eines Eintrags
+  stillschweigend durch «Sonstiges / privat» ersetzt
+- Aus dem Eingang übernommene Einträge wurden mit leerem Status gespeichert und
+  fehlten bis zum Neuladen im Filter «Bestätigt»; sie sind jetzt bestätigt
+
 ## [1.2.0] – 2026-10-11
 
 ### Added
