@@ -140,3 +140,6 @@ body.startet header button { visibility: hidden; }
     .eg-karten { grid-template-columns: 1fr; }
     .eg-karte { grid-template-columns: 6rem 1fr; }
   }
+
+  #version { font-size: 0.75rem; white-space: nowrap; }
+  #version.vorab { font-style: italic; }

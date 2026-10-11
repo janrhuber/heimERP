@@ -13,7 +13,8 @@
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
-const { DATEN_DIR, istExtern } = require("./hilfen");
+const { DATEN_DIR, istExtern, nurIntern } = require("./hilfen");
+const { version } = require("./version");
 const auth = require("./auth");
 const ausgaben = require("./ausgaben");
 const belege = require("./belege");
@@ -47,6 +48,12 @@ app.use(auth.router);
 app.use(ausgaben.router);
 app.use(belege.router);
 app.use(eingang.router);
+
+/* Version des laufenden Stands. Nur intern: von aussen würde sie beim
+   gezielten Suchen nach bekannten Lücken helfen. Ohne Anmeldung, damit sie
+   schon auf dem Login-Bildschirm sichtbar ist. Beim Start ermittelt. */
+version();
+app.get("/api/version", nurIntern, (req, res) => res.json(version()));
 
 /* Von aussen gibt es nur die Seite «Beleg hochladen». Die eigentliche App –
    heimERP.html und ihre Skripte – wird gar nicht erst ausgeliefert, nicht
