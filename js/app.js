@@ -16,6 +16,7 @@ function initForm() {
   });
   sel.onchange = () => {
     const k = KATEGORIEN[sel.value];
+    if (!k) return; // alte Kategorie eines bestehenden Eintrags – Anteile bleiben, wie sie sind
     $("fUnterhalt").value = k.u;
     $("fWert").value = k.w;
     updateAnteilInfo();
@@ -79,6 +80,9 @@ async function pickReceipts() {
 function resetForm() {
   editId = null;
   editVorlageId = null;
+  editVorlageDatum = null;
+  editKategorieAlt = null;
+  $("fKategorie").querySelector('option[value="alt"]')?.remove();
   aktiveEingangIds = null;
   pendingFiles = []; pendingExisting = [];
   $("formTitle").textContent = "Neue Ausgabe erfassen";
@@ -113,7 +117,16 @@ function startEdit(id) {
   $("fNotizen").value = e.notizen;
   $("fProjekt").value = e.projekt || "";
   const ki = KATEGORIEN.findIndex(k => k.name === e.kategorie);
-  $("fKategorie").value = ki >= 0 ? ki : KATEGORIEN.length - 1;
+  if (ki >= 0) $("fKategorie").value = ki;
+  else {
+    /* Kategorie aus alten Daten, die es nicht mehr gibt: als eigene Auswahl
+       anbieten, statt sie stillschweigend durch «Sonstiges» zu ersetzen */
+    editKategorieAlt = e.kategorie;
+    const o = document.createElement("option");
+    o.value = "alt"; o.textContent = (e.kategorie || "(ohne Kategorie)") + " – bisherige";
+    $("fKategorie").appendChild(o);
+    $("fKategorie").value = "alt";
+  }
   $("fUnterhalt").value = e.pUnterhalt;
   $("fWert").value = e.pWert;
   pendingFiles = [];
@@ -137,12 +150,15 @@ async function saveEntry() {
   /* --- Vorlage (wiederkehrend) speichern --- */
   if ($("fWiederholung").value !== "X") {
     if (pendingFiles.length) { alert("Belege können erst beim Bestätigen der einzelnen Einträge angehängt werden."); return; }
+    /* Der gemerkte Tag bleibt, solange das vorgeschlagene Datum nicht geändert
+       wurde: es kann ein gekürzter Monatsletzter sein (28.2. bei Tag 31). */
+    const alteVorlage = editVorlageId ? settings.vorlagen.find(x => x.id === editVorlageId) : null;
     const t = {
       id: editVorlageId || uid(),
       aktiv: true,
       intervall: $("fWiederholung").value,
       naechste: datum,
-      tag: parseInt(datum.slice(8, 10)),
+      tag: alteVorlage && alteVorlage.tag && datum === editVorlageDatum ? alteVorlage.tag : parseInt(datum.slice(8, 10)),
       ende: $("fEnde").value || "",
       kategorie: KATEGORIEN[$("fKategorie").value].name,
       beschreibung,
@@ -175,7 +191,7 @@ async function saveEntry() {
   const obj = {
     id: editId || uid(),
     datum, jahr,
-    kategorie: KATEGORIEN[$("fKategorie").value].name,
+    kategorie: $("fKategorie").value === "alt" ? editKategorieAlt : KATEGORIEN[$("fKategorie").value].name,
     beschreibung,
     lieferant: $("fLieferant").value.trim(),
     betrag,

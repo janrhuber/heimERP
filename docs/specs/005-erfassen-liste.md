@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Aktiv (v1.0.0) |
+| **Status** | Aktiv (v1.2.1) |
 | **Code** | `js/app.js` (`saveEntry`, `startEdit`, `deleteEntry`, `renderList`), `js/basis.js` (`KATEGORIEN`) |
 | **Tests** | keine (Frontend) |
 | **Verwandt** | [004 — Speichermodi](004-speichermodi.md), [006 — Belegablage](006-belegablage.md), [007 — Wiederkehrende Ausgaben](007-wiederkehrende-ausgaben.md), [008 — Jahresrechnung](008-jahresrechnung.md) |
@@ -106,9 +106,9 @@ die ganze Liste nach Datum sortiert geschrieben.
 ## Randfälle
 
 - Kategorie aus alten Daten, die es nicht mehr gibt → bleibt am Eintrag
-  erhalten und erscheint im Filter; beim Bearbeiten springt die Auswahl auf
-  «Sonstiges / privat», und beim Speichern wird die alte Kategorie damit
-  überschrieben
+  erhalten und erscheint im Filter; beim Bearbeiten steht sie als
+  «… – bisherige» in der Auswahl und wird nur ersetzt, wenn bewusst eine andere
+  gewählt wird
 - Wiederholung gewählt → es entsteht eine Vorlage, kein Eintrag ([007](007-wiederkehrende-ausgaben.md))
 - Summen der Liste zählen geplante Einträge mit; Jahresrechnung und Dossier nicht
 
