@@ -42,7 +42,7 @@ let serverModus = false;     // true = Backend statt lokalem Ordner
 let currentUser = null;      // { name } nach Login (nur Server-Modus)
 let csvEtag = null;          // ETag der zuletzt gelesenen ausgaben.csv (Schutz vor verlorenen Updates)
 let externerZugang = false;  // true = über den öffentlichen Proxy erreicht, nur Eingang verfügbar
-let aktiveEingangId = null;  // Eingang-Posten, der gerade ins Formular übernommen wird
+let aktiveEingangIds = null; // Eingang-Posten (einer oder mehrere), die gerade ins Formular übernommen werden
 
 /* ================= Hilfsfunktionen ================= */
 const $ = id => document.getElementById(id);
