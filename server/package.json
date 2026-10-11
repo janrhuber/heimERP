@@ -1,11 +1,12 @@
 {
   "name": "heimerp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Server-Backend für heimERP (Dual-Mode: lokaler Ordner oder Server)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
