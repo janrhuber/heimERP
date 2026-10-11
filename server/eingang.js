@@ -44,7 +44,8 @@ router.post("/api/eingang", requireAuth, upload.single("datei"), async (req, res
   try {
     const beschreibung = String(req.body.beschreibung || "").trim();
     const lieferant = String(req.body.lieferant || "").trim().slice(0, 80);
-    if (!beschreibung) return res.status(400).json({ fehler: "Beschreibung fehlt" });
+    /* Beschreibung ist freiwillig: unterwegs zählt, dass der Beleg gesichert
+       ist. Was es war, steht auf dem Beleg und wird zu Hause ergänzt. */
     if (!req.file) return res.status(400).json({ fehler: "Keine Datei erhalten" });
 
     /* Betrag ist optional: unterwegs zählt, dass der Beleg gesichert ist.
@@ -69,7 +70,7 @@ router.post("/api/eingang", requireAuth, upload.single("datei"), async (req, res
 
     await fsp.mkdir(EINGANG_DIR, { recursive: true });
     const base = sanitizeFilename(datum.replace(/-/g, "").slice(2)) + "_" +
-                 sanitizeFilename(beschreibung) +
+                 sanitizeFilename(beschreibung || "Beleg") +
                  (lieferant ? "_" + sanitizeFilename(lieferant) : "");
     const dateiname = eindeutigerDateiname(EINGANG_DIR, base, ext);
     await fsp.writeFile(path.join(EINGANG_DIR, dateiname), req.file.buffer);
@@ -92,19 +93,20 @@ router.post("/api/eingang", requireAuth, upload.single("datei"), async (req, res
       liste.push(posten);
       await speichereListe(liste);
     });
-    res.json(posten);
+    /* Antwort verrät nichts vom Posten – von aussen wird nur abgegeben */
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 
-/* Auch von aussen: du willst unterwegs sehen, was schon drin ist, damit du
-   denselben Beleg nicht zweimal hochlädst. */
-router.get("/api/eingang", requireAuth, async (req, res, next) => {
+/* Liste und Dateien nur aus dem Heimnetz: von aussen wird hochgeladen,
+   aber nichts angezeigt – auch nicht die eigenen Belege. */
+router.get("/api/eingang", nurIntern, requireAuth, async (req, res, next) => {
   try {
     res.json(await ladeListe());
   } catch (e) { next(e); }
 });
 
-router.get("/api/eingang/datei/:id", requireAuth, async (req, res, next) => {
+router.get("/api/eingang/datei/:id", nurIntern, requireAuth, async (req, res, next) => {
   try {
     const posten = (await ladeListe()).find(p => p.id === req.params.id);
     if (!posten) return res.status(404).json({ fehler: "Nicht gefunden" });

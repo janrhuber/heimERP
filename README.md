@@ -21,6 +21,10 @@ js/basis.js           ← Konstanten, Kategorien, CSV-Logik
 js/speicher.js        ← Dateizugriff (Ordner, CSV, Belege)
 js/wiederkehrend.js   ← wiederkehrende Ausgaben
 js/app.js             ← Formular, Auswertungen, Bedienung
+js/eingang.js         ← Eingang: unterwegs hochgeladene Belege (nur Server-Modus)
+hochladen.html        ← Seite «Beleg hochladen» für unterwegs (Server-Modus, eigenes CSS)
+js/hochladen.js       ← Logik dieser Seite (eigenständig)
+server/               ← optionales Node.js-Backend (index.js startet app.js)
 ```
 
 Die Dateien gehören zusammen – beim Weitergeben/Verschieben immer den ganzen Ordner nehmen.
@@ -98,6 +102,35 @@ falls erkennbar; bei Namenskonflikten wird `_2`, `_3` … angehängt.
   **unbefristet aufbewahren**.
 - **Gemischte Arbeiten** (z. B. Küche ersetzt und gleichzeitig vergrössert): prozentual aufteilen –
   genau dafür gibt es die beiden Prozentfelder.
+
+## Server-Modus (optional)
+
+Statt aus einem lokalen Ordner kann heimERP auch von einem kleinen Server im
+Heimnetz ausgeliefert werden (`server/`, Node.js). Dann liegen die Daten zentral,
+und Belege lassen sich unterwegs mit dem Handy sichern.
+
+```
+cd server
+npm install
+DATEN_DIR=/pfad/zu/den/daten node benutzer-cli.js add <Name>
+DATEN_DIR=/pfad/zu/den/daten node index.js      # Port 3000
+```
+
+**Wer was erreicht, entscheidet der Weg – nicht das Konto:**
+
+| Weg | Was es dort gibt |
+|---|---|
+| direkt im Heimnetz (Port 3000) | die ganze App |
+| über einen öffentlichen Reverse-Proxy | nur die Seite «Beleg hochladen»: anmelden, Fotos oder PDF hochladen. Keine Listen, keine Ausgaben, keine bereits hochgeladenen Belege |
+
+Der Proxy muss dafür bei jeder Anfrage den Header `X-Zugang: extern` **setzen**
+(nicht durchreichen) und sollte selbst nur `/`, `/hochladen.html`,
+`/js/hochladen.js`, `/api/status`, `/api/login`, `/api/logout` und
+`POST /api/eingang` durchlassen. Die App prüft dasselbe ein zweites Mal
+(`server/app.js`, `nurIntern` in `server/hilfen.js`) – fällt eine Schicht durch
+einen Konfigurationsfehler aus, hält die andere.
+
+Tests: `cd server && npm test` (laufen gegen ein temporäres Datenverzeichnis).
 
 ## Datensicherung
 
