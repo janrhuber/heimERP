@@ -117,3 +117,26 @@
 body.startet main,
 body.startet #status,
 body.startet header button { visibility: hidden; }
+
+  /* ---------- Eingang: Arbeitsliste ---------- */
+  .eg-titel { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .eg-hochladen { color: var(--accent); font-weight: 600; }
+  .eg-karten { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); }
+  .eg-karte { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.9rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.8rem; background: #fff; }
+  .eg-karte.gewaehlt { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .eg-bild { border: 1px solid var(--border); border-radius: 6px; background: var(--bg); padding: 0; height: 9.5rem; cursor: zoom-in; overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 0.85rem; }
+  .eg-bild img { width: 100%; height: 100%; object-fit: cover; }
+  .eg-kopf { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+  .eg-text { font-size: 0.9rem; margin: 0.15rem 0; }
+  .eg-betrag { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 0.15rem 0 0.35rem; }
+  .eg-betrag.fehlt { font-size: 0.9rem; font-weight: 400; color: var(--muted); font-style: italic; }
+  .eg-aktionen { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .eg-wahl { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; font-weight: 400; color: var(--muted); cursor: pointer; margin: 0 0 0 auto; white-space: nowrap; width: auto; }
+  .eg-wahl input { width: auto; margin: 0; }
+  .eg-sammel { position: sticky; top: 0.5rem; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; }
+  .eg-erledigt { margin-top: 1rem; }
+  .eg-erledigt summary { cursor: pointer; color: var(--muted); }
+  @media (max-width: 720px) {
+    .eg-karten { grid-template-columns: 1fr; }
+    .eg-karte { grid-template-columns: 6rem 1fr; }
+  }

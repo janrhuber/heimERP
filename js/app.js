@@ -79,7 +79,7 @@ async function pickReceipts() {
 function resetForm() {
   editId = null;
   editVorlageId = null;
-  aktiveEingangId = null;
+  aktiveEingangIds = null;
   pendingFiles = []; pendingExisting = [];
   $("formTitle").textContent = "Neue Ausgabe erfassen";
   $("btnAbbrechen").classList.add("hidden");
@@ -192,8 +192,8 @@ async function saveEntry() {
   } else entries.push(obj);
   entries.sort((a, b) => a.datum < b.datum ? -1 : 1);
   await saveCSV();
-  /* vor resetForm, das aktiveEingangId nullt */
-  if (serverModus && aktiveEingangId) await markiereEingangErledigt(obj.id);
+  /* vor resetForm, das aktiveEingangIds nullt */
+  if (serverModus && aktiveEingangIds) await markiereEingangErledigt(obj.id);
   resetForm();
   renderAll();
 }

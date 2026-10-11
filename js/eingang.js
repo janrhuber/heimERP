@@ -1,54 +1,21 @@
 "use strict";
 /* ================= Eingang: Belege von unterwegs =================
-   Von aussen ist das die einzige verfügbare Funktion. Zu Hause kommt die
-   Übernahme ins Erfassungsformular dazu. */
+   Hochgeladen wird auf der eigenen Seite hochladen.html (von aussen die
+   einzige). Hier, zu Hause, wird abgearbeitet: ansehen, als Eintrag
+   übernehmen, löschen. Jede Datei kommt als eigener Posten an; was
+   zusammengehört (z. B. zwei Seiten einer Rechnung), wird hier ausgewählt
+   und als EIN Eintrag übernommen. */
 
-let egDatei = null; // fürs Hochladen gewählte Datei
-let egListe = [];   // zuletzt geladene Eingang-Posten
+let egListe = [];             // zuletzt geladene Eingang-Posten
+const egAuswahl = new Set();  // angehakte Posten für die Sammelübernahme
 
 function initEingangUI() {
-  $("btnEgDatei").onclick = () => $("egDateiInput").click();
-  $("egDateiInput").onchange = () => {
-    egDatei = $("egDateiInput").files[0] || null;
-    $("egDateiName").textContent = egDatei ? egDatei.name : "";
-    $("egDateiInput").value = "";
+  $("btnSammelBuchen").onclick = () => uebernehmeEingang([...egAuswahl]);
+  $("btnSammelAufheben").onclick = () => {
+    egAuswahl.clear();
+    for (const c of document.querySelectorAll("[data-egwahl]")) c.checked = false;
+    zeigeAuswahl();
   };
-  $("btnEingangSenden").onclick = sendeEingang;
-  $("egDatum").value = todayISO();
-}
-
-async function sendeEingang() {
-  const beschreibung = $("egBeschreibung").value.trim();
-  if (!beschreibung) { alert("Bitte kurz beschreiben, worum es geht."); return; }
-  if (!egDatei) { alert("Bitte den Beleg anhängen (Foto oder PDF)."); return; }
-
-  /* Betrag ist bewusst optional: unterwegs zählt, dass der Beleg gesichert
-     ist. Fehlt er, wird er zu Hause beim Übernehmen ergänzt. */
-  const betragRoh = $("egBetrag").value.trim();
-  if (betragRoh !== "" && !isFinite(parseFloat(betragRoh))) {
-    alert("Der Betrag ist keine gültige Zahl."); return;
-  }
-
-  const fd = new FormData();
-  fd.append("beschreibung", beschreibung);
-  fd.append("lieferant", $("egLieferant").value.trim());
-  fd.append("datum", $("egDatum").value || "");
-  if (betragRoh !== "") fd.append("betrag", betragRoh);
-  fd.append("datei", egDatei, egDatei.name);
-
-  $("btnEingangSenden").disabled = true;
-  try { await apiFetch("/api/eingang", { method: "POST", body: fd }); }
-  catch (e) { alert("Fehler beim Hochladen: " + e.message); return; }
-  finally { $("btnEingangSenden").disabled = false; }
-
-  $("egBeschreibung").value = "";
-  $("egLieferant").value = "";
-  $("egBetrag").value = "";
-  $("egDatum").value = todayISO();
-  egDatei = null;
-  $("egDateiName").textContent = "";
-  await ladeEingang();
-  alert("✔ Beleg gesichert.");
 }
 
 async function ladeEingang() {
@@ -57,85 +24,148 @@ async function ladeEingang() {
   renderEingang();
 }
 
-function renderEingang() {
-  const offene = egListe.filter(p => p.status === "OFFEN");
-  const body = $("egListeBody");
-  body.innerHTML = "";
+const egDatum = p => p.datum || (p.eingereicht || "").slice(0, 10);
 
-  for (const p of [...egListe].reverse()) {
-    const erledigt = p.status === "ERLEDIGT";
+function renderEingang() {
+  const nachEingang = (x, y) => String(x.eingereicht).localeCompare(String(y.eingereicht));
+  /* Arbeitsliste: was am längsten liegt, zuerst. Erledigte: neueste zuerst. */
+  const offene = egListe.filter(p => p.status === "OFFEN").sort(nachEingang);
+  const erledigte = egListe.filter(p => p.status === "ERLEDIGT").sort(nachEingang).reverse();
+
+  /* Auswahl überlebt das Neuladen, aber nur für Posten, die noch offen sind */
+  for (const id of [...egAuswahl]) if (!offene.some(p => p.id === id)) egAuswahl.delete(id);
+
+  const karten = $("egKarten");
+  karten.innerHTML = "";
+  for (const p of offene) karten.appendChild(egKarte(p, offene.length > 1));
+  $("egListeEmpty").classList.toggle("hidden", offene.length > 0);
+  $("egSammelHinweis").classList.toggle("hidden", offene.length < 2);
+  $("egAnzahl").textContent = offene.length ? "(" + offene.length + ")" : "";
+  $("tabEingang").textContent = "📥 Eingang" + (offene.length ? " (" + offene.length + ")" : "");
+  zeigeAuswahl();
+
+  const eb = $("egErledigtBody");
+  eb.innerHTML = "";
+  for (const p of erledigte.slice(0, 50)) {
     const tr = document.createElement("tr");
-    if (erledigt) tr.className = "geplant";
     tr.innerHTML =
-      `<td>${escapeHtml(p.datum || (p.eingereicht || "").slice(0, 10))}</td>` +
-      `<td>${escapeHtml(p.beschreibung)}</td>` +
+      `<td>${escapeHtml(egDatum(p))}</td>` +
+      `<td>${escapeHtml(p.beschreibung || "")}</td>` +
       `<td>${escapeHtml(p.lieferant || "")}</td>` +
       `<td class="num">${p.betrag == null ? "–" : chf(p.betrag)}</td>` +
-      `<td><span class="beleg-link" data-egdatei="${p.id}">📄 ${escapeHtml((p.datei || "").split("/").pop())}</span></td>` +
-      `<td>${erledigt ? '<span class="badge nix">übernommen</span>' : '<span class="badge geplant">offen</span>'}</td>` +
-      (externerZugang ? "" :
-        `<td style="white-space:nowrap">` +
-          (erledigt ? "" : `<button class="small ok" data-egbuchen="${p.id}" title="Als Eintrag übernehmen">→ Eintrag</button> `) +
-          `<button class="small danger" data-egdel="${p.id}">🗑</button></td>`);
-    body.appendChild(tr);
+      `<td><button class="small danger" data-egdel="${p.id}" title="Aus dem Eingang entfernen">🗑</button></td>`;
+    eb.appendChild(tr);
   }
-
-  $("egListeEmpty").classList.toggle("hidden", egListe.length > 0);
-  $("tabEingang").textContent = "📥 Eingang" + (offene.length ? " (" + offene.length + ")" : "");
-  /* Aktionsspalte nur zu Hause – von unterwegs gibt es nichts zu tun */
-  document.querySelectorAll(".eg-aktion").forEach(el => el.classList.toggle("hidden", externerZugang));
+  $("egErledigtAnzahl").textContent = erledigte.length;
+  $("egErledigtWrap").classList.toggle("hidden", erledigte.length === 0);
 }
 
-/* Zu Hause: Eingang-Posten ins Erfassungsformular übernehmen.
-   Der Beleg wird als echte Datei nachgeladen, damit er über den normalen
-   Speicherweg in Belege/<Jahr>/ landet und dort das übliche Namensschema
-   bekommt – der Eingang ist nur die Zwischenablage. */
-async function uebernehmeEingang(id) {
-  const p = egListe.find(x => x.id === id);
-  if (!p) return;
-  let file;
+function zeigeAuswahl() {
+  const n = egAuswahl.size;
+  $("egSammel").classList.toggle("hidden", n < 2);
+  $("egSammelText").textContent = n + " Belege ausgewählt";
+  for (const k of document.querySelectorAll(".eg-karte")) k.classList.toggle("gewaehlt", egAuswahl.has(k.dataset.id));
+}
+
+function egKarte(p, waehlbar) {
+  const el = document.createElement("article");
+  el.className = "eg-karte";
+  el.dataset.id = p.id;
+  const datei = (p.datei || "").split("/").pop();
+  const istBild = /\.(jpe?g|png|webp)$/i.test(datei);
+  const endung = (datei.split(".").pop() || "").toUpperCase();
+  const vorschau = istBild
+    ? `<img loading="lazy" alt="Beleg ${escapeHtml(p.beschreibung || "")}" src="/api/eingang/datei/${encodeURIComponent(p.id)}">`
+    : `<span>📄 ${escapeHtml(endung)}</span>`;
+
+  el.innerHTML =
+    `<button class="eg-bild" data-egdatei="${p.id}" title="Beleg gross anzeigen">${vorschau}</button>` +
+    `<div>` +
+      `<div class="eg-kopf"><strong>${escapeHtml(p.beschreibung || "Ohne Beschreibung")}</strong>` +
+        `<span class="muted">${escapeHtml(egDatum(p))}</span></div>` +
+      (p.lieferant ? `<div class="eg-text">${escapeHtml(p.lieferant)}</div>` : "") +
+      (p.betrag == null
+        ? `<div class="eg-betrag fehlt">Betrag nicht angegeben – steht auf dem Beleg</div>`
+        : `<div class="eg-betrag">CHF ${chf(p.betrag)}</div>`) +
+      `<div class="eg-aktionen">` +
+        `<button class="small ok" data-egbuchen="${p.id}">Als Eintrag übernehmen</button>` +
+        `<button class="small danger" data-egdel="${p.id}">Löschen</button>` +
+        (waehlbar
+          ? `<label class="eg-wahl"><input type="checkbox" data-egwahl="${p.id}"${egAuswahl.has(p.id) ? " checked" : ""}> auswählen</label>`
+          : "") +
+      `</div>` +
+    `</div>`;
+  return el;
+}
+
+/* Eingang-Posten ins Erfassungsformular übernehmen – einen oder mehrere als
+   EINEN Eintrag. Die Belege werden als echte Dateien nachgeladen, damit sie
+   über den normalen Speicherweg in Belege/<Jahr>/ landen und dort das übliche
+   Namensschema bekommen – der Eingang ist nur die Zwischenablage. */
+async function uebernehmeEingang(ids) {
+  const posten = egListe.filter(x => ids.includes(x.id))
+    .sort((x, y) => String(x.eingereicht).localeCompare(String(y.eingereicht)));
+  if (!posten.length) return;
+
+  const files = [];
   try {
-    const r = await apiFetch("/api/eingang/datei/" + encodeURIComponent(id));
-    const blob = await r.blob();
-    file = new File([blob], (p.datei || "Beleg").split("/").pop(), { type: blob.type });
+    for (const x of posten) {
+      const r = await apiFetch("/api/eingang/datei/" + encodeURIComponent(x.id));
+      const blob = await r.blob();
+      files.push(new File([blob], (x.datei || "Beleg").split("/").pop(), { type: blob.type }));
+    }
   } catch (e) { alert("Datei konnte nicht geladen werden: " + e.message); return; }
 
+  /* Angaben zusammenführen: Beträge addieren, Texte ohne Wiederholung,
+     frühestes Datum (das Rechnungsdatum steht auf der ersten Seite) */
+  const einmal = liste => [...new Set(liste.filter(Boolean))];
+  const betraege = posten.map(x => x.betrag).filter(b => b != null);
+  const betrag = betraege.length ? Math.round(betraege.reduce((s, b) => s + b, 0) * 100) / 100 : null;
+  const daten = posten.map(x => x.datum).filter(Boolean).sort();
+
   resetForm();
-  aktiveEingangId = id; // nach resetForm setzen – das nullt es
-  $("fDatum").value = p.datum || todayISO();
-  $("fBeschreibung").value = p.beschreibung;
-  $("fLieferant").value = p.lieferant || "";
-  if (p.betrag != null) $("fBetrag").value = p.betrag;
+  aktiveEingangIds = posten.map(x => x.id); // nach resetForm setzen – das nullt es
+  $("fDatum").value = daten[0] || todayISO();
+  $("fBeschreibung").value = einmal(posten.map(x => x.beschreibung)).join(", ");
+  $("fLieferant").value = einmal(posten.map(x => x.lieferant)).join(", ");
+  if (betrag != null) $("fBetrag").value = betrag;
   $("fStatus").value = "OFFEN";
-  pendingFiles.push(file);
+  pendingFiles.push(...files);
   renderBelegPreview();
-  $("formTitle").textContent = "Beleg aus Eingang übernehmen";
+  $("formTitle").textContent = posten.length > 1
+    ? posten.length + " Belege aus dem Eingang als einen Eintrag übernehmen"
+    : "Beleg aus Eingang übernehmen";
   $("btnAbbrechen").classList.remove("hidden");
+  egAuswahl.clear();
+  zeigeAuswahl();
   showTab("Erfassen");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("formTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+  ($("fBeschreibung").value ? (betrag == null ? $("fBetrag") : null) : $("fBeschreibung"))?.focus();
 }
 
 async function loescheEingang(id) {
   const p = egListe.find(x => x.id === id);
   if (!p) return;
-  if (!confirm(`Eingang «${p.beschreibung}» löschen?\nDie Datei wird mitgelöscht.`)) return;
+  if (!confirm(`Beleg «${p.beschreibung || "ohne Beschreibung"}» aus dem Eingang löschen?\nDie Datei im Eingang wird mitgelöscht.`)) return;
   try { await apiFetch("/api/eingang/" + encodeURIComponent(id), { method: "DELETE" }); }
   catch (e) { alert("Fehler: " + e.message); return; }
   await ladeEingang();
 }
 
-/* Nach dem Speichern eines übernommenen Belegs den Eingang als erledigt
-   markieren – sonst taucht derselbe Beleg beim nächsten Mal wieder auf. */
+/* Nach dem Speichern eines übernommenen Eintrags die Posten als erledigt
+   markieren – sonst tauchen dieselben Belege beim nächsten Mal wieder auf. */
 async function markiereEingangErledigt(eintragId) {
-  if (!aktiveEingangId) return;
-  const id = aktiveEingangId;
-  aktiveEingangId = null;
+  if (!aktiveEingangIds) return;
+  const ids = aktiveEingangIds;
+  aktiveEingangIds = null;
   try {
-    await apiFetch("/api/eingang/" + encodeURIComponent(id) + "/erledigt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eintragId: eintragId || "" }),
-    });
+    for (const id of ids) {
+      await apiFetch("/api/eingang/" + encodeURIComponent(id) + "/erledigt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eintragId: eintragId || "" }),
+      });
+    }
   } catch { /* nicht kritisch – der Posten bleibt sonst offen stehen */ }
   await ladeEingang();
 }
@@ -144,6 +174,13 @@ document.addEventListener("click", ev => {
   const el = ev.target.closest("[data-egdatei],[data-egbuchen],[data-egdel]");
   if (!el) return;
   if (el.dataset.egdatei) window.open("/api/eingang/datei/" + encodeURIComponent(el.dataset.egdatei), "_blank");
-  else if (el.dataset.egbuchen) uebernehmeEingang(el.dataset.egbuchen);
+  else if (el.dataset.egbuchen) uebernehmeEingang([el.dataset.egbuchen]);
   else if (el.dataset.egdel) loescheEingang(el.dataset.egdel);
+});
+
+document.addEventListener("change", ev => {
+  const id = ev.target.dataset && ev.target.dataset.egwahl;
+  if (!id) return;
+  if (ev.target.checked) egAuswahl.add(id); else egAuswahl.delete(id);
+  zeigeAuswahl();
 });
