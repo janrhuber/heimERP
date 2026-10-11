@@ -6,6 +6,11 @@ nach [SemVer](https://semver.org/lang/de/). Neue Einträge zuerst unter
 
 ## [Unreleased]
 
+## [1.2.1] – 2026-10-11
+
+### Added
+- Specs für die fachlichen Teile der App (004–011)
+
 ### Fixed
 - Das Bearbeiten einer wiederkehrenden Vorlage löschte die noch offenen
   geplanten Einträge des laufenden Jahres; das Formular schlägt jetzt den
