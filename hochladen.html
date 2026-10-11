@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#17503D">
+<title>Beleg hochladen – heimERP</title>
+<!--
+  Die einzige Seite, die von aussen ausgeliefert wird. Das CSS steht bewusst
+  hier im HTML: so braucht die Seite nur zwei Dateien in der Whitelist
+  (server/app.js EXTERN_DATEIEN und nginx), und nichts wird von Dritten geladen.
+-->
+<style>
+  :root {
+    --tanne: #17503D;      /* Kopf, Hauptaktion */
+    --tanne-hell: #E3F1EB;
+    --text: #1A2330;
+    --text-2: #5C6B7F;
+    --grund: #EEF1F0;
+    --papier: #FFFFFF;
+    --linie: #D5DDDA;
+    --rot: #A82A22;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--grund); color: var(--text);
+    font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  body.startet main { visibility: hidden; }
+
+  header {
+    background: var(--tanne); color: #fff;
+    padding: calc(.9rem + env(safe-area-inset-top)) 1.25rem .9rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .marke { font-weight: 800; letter-spacing: -.01em; font-size: 1.05rem; }
+  #btnLogout { background: none; border: 0; color: #CFE3DA; font: inherit; font-size: .9rem; padding: .4rem 0; cursor: pointer; }
+
+  main { max-width: 30rem; margin: 0 auto; padding: 1.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom)); }
+  h1 { font-size: 1.9rem; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; margin: 0 0 1.25rem; }
+
+  label { font-weight: 650; display: block; margin-bottom: .45rem; }
+  .feld { margin-bottom: 1.4rem; }
+  .hinweis { color: var(--text-2); font-size: .9rem; margin: .35rem 0 0; }
+  .freiwillig { font-weight: 400; color: var(--text-2); }
+  .freiwillig::before { content: "– "; }
+
+  input[type=text], input[type=password], input[type=date], input[inputmode=decimal] {
+    width: 100%; font: inherit; color: var(--text);
+    background: var(--papier); border: 1.5px solid var(--linie); border-radius: 10px;
+    padding: .8rem .9rem; min-height: 3.2rem;
+  }
+  :focus-visible { outline: 3px solid var(--tanne); outline-offset: 2px; }
+
+  /* ---------- Beleg: das eine auffällige Element ----------
+     Ein Streifen Papier mit abgerissener Unterkante. Antippen öffnet Kamera
+     oder Galerie; danach stehen die eigenen Fotos im Streifen. */
+  .beleg {
+    position: relative; display: block; margin-bottom: 2rem; cursor: pointer;
+    background: var(--papier); color: var(--text);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 1.5rem 1.25rem 2.2rem; text-align: center;
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 22px 11px repeat-x;
+            mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 22px 11px repeat-x;
+  }
+  .beleg input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .beleg:has(input:focus-visible) { outline: 3px solid var(--tanne); outline-offset: 3px; }
+  .leer { padding: 1.4rem 0 .6rem; }
+  .leer svg { width: 3.4rem; height: 3.4rem; color: var(--tanne); }
+  .leer strong { display: block; font-size: 1.3rem; font-weight: 800; margin: .5rem 0 .2rem; }
+  .leer span { color: var(--text-2); font-size: .92rem; }
+  .bilder { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+  .bilder.eins { display: block; }
+  .stueck { position: relative; background: var(--grund); border-radius: 6px; }
+  .stueck img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; }
+  .bilder.eins .stueck img { aspect-ratio: auto; max-height: 22rem; object-fit: contain; }
+  .stueck .datei { font-weight: 650; font-size: .85rem; word-break: break-all; padding: 2.4rem .4rem .6rem; }
+  .bilder.eins .stueck .datei { font-size: 1rem; padding: 1.2rem 2.6rem; }
+  .weg { position: absolute; top: .3rem; right: .3rem; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 50%;
+    background: var(--text); color: #fff; font: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; }
+  .weg::after { content: ""; position: absolute; inset: -.5rem; } /* grössere Tippfläche */
+  .mehr-fotos { display: inline-block; margin-top: .8rem; color: var(--text-2); font-size: .92rem; text-decoration: underline; }
+  .beleg.gelegt { animation: legen .45s cubic-bezier(.2, .7, .2, 1); }
+  @keyframes legen { from { transform: translateY(-14px); clip-path: inset(0 0 100% 0); } to { transform: none; clip-path: inset(0 0 0 0); } }
+
+  details { margin-bottom: 1.6rem; }
+  summary { cursor: pointer; font-weight: 650; padding: .6rem 0; color: var(--text-2); list-style-position: inside; }
+  details[open] summary { margin-bottom: .8rem; }
+
+  .knopf {
+    width: 100%; min-height: 3.6rem; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--tanne); color: #fff; font: inherit; font-weight: 800; font-size: 1.1rem;
+  }
+  .knopf:disabled { opacity: .6; cursor: progress; }
+  .knopf.zweit { background: var(--papier); color: var(--text); border: 1.5px solid var(--linie); font-weight: 700; }
+
+  #fehler, #loginFehler { color: var(--rot); font-weight: 600; min-height: 1.4em; margin: .9rem 0 0; }
+  #fehler:empty, #loginFehler:empty { margin: 0; }
+
+  .fertig { text-align: center; padding-top: 1.5rem; }
+  .fertig .haken { width: 4.5rem; height: 4.5rem; color: var(--tanne); }
+  .fertig h1 { margin-top: .8rem; }
+  .fertig p { color: var(--text-2); margin: 0 0 2rem; }
+
+  @media (prefers-reduced-motion: reduce) { .beleg.gelegt { animation: none; } }
+</style>
+</head>
+<body class="startet">
+
+<header>
+  <span class="marke">heimERP</span>
+  <button id="btnLogout" type="button" hidden>Abmelden</button>
+</header>
+
+<main>
+  <!-- ========== Anmelden ========== -->
+  <section id="viewLogin" hidden>
+    <h1>Anmelden</h1>
+    <form id="loginForm" novalidate>
+      <div class="feld">
+        <label for="loginName">Name</label>
+        <input type="text" id="loginName" autocomplete="username" autocapitalize="none" required>
+      </div>
+      <div class="feld">
+        <label for="loginPasswort">Passwort</label>
+        <input type="password" id="loginPasswort" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="knopf">Anmelden</button>
+      <p id="loginFehler" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- ========== Beleg hochladen ========== -->
+  <section id="viewFormular" hidden>
+    <h1>Beleg hochladen</h1>
+    <form id="formular" novalidate>
+      <label class="beleg" id="beleg">
+        <input type="file" id="datei" multiple accept="image/*,application/pdf,.heic,.heif" aria-describedby="belegText">
+        <div class="leer" id="belegLeer">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 15h8l4-6h12l4 6h8v24H6z"/><circle cx="24" cy="26" r="7.5"/>
+          </svg>
+          <strong>Beleg fotografieren</strong>
+          <span id="belegText">oder Fotos und PDF wählen – auch mehrere</span>
+        </div>
+        <div id="belegVorschau" hidden></div>
+      </label>
+
+      <div class="feld">
+        <label for="beschreibung">Was war das? <span class="freiwillig">freiwillig</span></label>
+        <input type="text" id="beschreibung" maxlength="200" placeholder="z. B. Ersatz Boiler">
+      </div>
+      <div class="feld">
+        <label for="lieferant">Handwerker oder Laden <span class="freiwillig">freiwillig</span></label>
+        <input type="text" id="lieferant" maxlength="80" placeholder="z. B. Sanitär Muster">
+      </div>
+
+      <details id="mehr">
+        <summary>Betrag und Datum (freiwillig)</summary>
+        <p class="hinweis" id="mehrHinweis" style="margin-bottom:1.1rem" hidden>Gilt für alle Belege. Die Beträge stehen auf den Belegen.</p>
+        <div class="feld" id="feldBetrag">
+          <label for="betrag">Betrag in CHF</label>
+          <input type="text" id="betrag" inputmode="decimal" autocomplete="off" placeholder="0.00">
+          <p class="hinweis">Gutschrift? Mit Minus eingeben.</p>
+        </div>
+        <div class="feld">
+          <label for="datum">Datum auf dem Beleg</label>
+          <input type="date" id="datum">
+          <p class="hinweis">Leer gelassen gilt heute.</p>
+        </div>
+      </details>
+
+      <button type="submit" id="btnSenden" class="knopf">Beleg hochladen</button>
+      <p id="fehler" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- ========== Bestätigung ========== -->
+  <section id="viewFertig" class="fertig" hidden>
+    <svg class="haken" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="24" cy="24" r="20"/><path d="M15 24.5l6 6 12-13"/>
+    </svg>
+    <h1 id="fertigTitel">Gesichert</h1>
+    <p>Zuordnen kannst du zu Hause, im Eingang.</p>
+    <button type="button" id="btnNochmal" class="knopf zweit">Weitere Belege hochladen</button>
+  </section>
+</main>
+
+<script src="js/hochladen.js?v=20261011"></script>
+</body>
+</html>
