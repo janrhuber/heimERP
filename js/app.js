@@ -79,7 +79,7 @@ async function pickReceipts() {
 function resetForm() {
   editId = null;
   editVorlageId = null;
-  aktiveEingangId = null;
+  aktiveEingangIds = null;
   pendingFiles = []; pendingExisting = [];
   $("formTitle").textContent = "Neue Ausgabe erfassen";
   $("btnAbbrechen").classList.add("hidden");
@@ -192,8 +192,8 @@ async function saveEntry() {
   } else entries.push(obj);
   entries.sort((a, b) => a.datum < b.datum ? -1 : 1);
   await saveCSV();
-  /* vor resetForm, das aktiveEingangId nullt */
-  if (serverModus && aktiveEingangId) await markiereEingangErledigt(obj.id);
+  /* vor resetForm, das aktiveEingangIds nullt */
+  if (serverModus && aktiveEingangIds) await markiereEingangErledigt(obj.id);
   resetForm();
   renderAll();
 }
@@ -606,6 +606,18 @@ function startFolderMode() {
   tryReconnect();
 }
 
+/* Version des laufenden Stands. Nur im Server-Modus und nur intern –
+   von aussen liefert /api/version 404, dann bleibt das Feld leer. */
+async function zeigeVersion() {
+  try {
+    const r = await fetch("/api/version", { credentials: "same-origin" });
+    if (!r.ok) return;
+    const v = await r.json();
+    $("version").textContent = v.anzeige;
+    $("version").classList.toggle("vorab", !v.release);
+  } catch { /* Anzeige ist Komfort, kein Grund für einen Fehler */ }
+}
+
 /* Server-Modus: das Backend aus server/ liefert die Daten.
    st.extern sagt, ob wir über den öffentlichen Proxy hereinkommen – dann gibt
    es nur den Eingang, und die Oberfläche wird gar nicht erst voll aufgebaut. */
@@ -618,6 +630,7 @@ function startServerMode(st) {
   $("loginForm").onsubmit = login;
   $("btnLogout").onclick = logout;
   initEingangUI();
+  zeigeVersion();
   if (st.angemeldet && st.benutzer) anmeldungErfolgreich(st.benutzer);
   else zeigeLogin();
 }

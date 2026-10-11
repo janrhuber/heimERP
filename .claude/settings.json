@@ -1,0 +1,38 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Read(./**)",
+      "Edit(./**)",
+      "Write(./**)",
+      "PowerShell(git *)",
+      "Bash(git *)",
+      "PowerShell(node *)",
+      "Bash(node *)",
+      "PowerShell(npm test*)",
+      "Bash(npm test*)",
+      "Bash(cd server && npm test*)",
+      "PowerShell(npm audit*)",
+      "Bash(npm audit*)",
+      "PowerShell(npm outdated*)",
+      "Bash(npm outdated*)"
+    ],
+    "ask": [
+      "PowerShell(git push*)",
+      "Bash(git push*)",
+      "PowerShell(npm install*)",
+      "Bash(npm install*)",
+      "PowerShell(npm update*)",
+      "Bash(npm update*)",
+      "PowerShell(*deploy.ps1*)",
+      "Bash(*deploy.ps1*)",
+      "PowerShell(ssh *)",
+      "Bash(ssh *)",
+      "PowerShell(scp *)",
+      "Bash(scp *)"
+    ]
+  }
+}

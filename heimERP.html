@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>heimERP – Liegenschaftskosten &amp; Steuerabzüge (AG)</title>
-<link rel="stylesheet" href="styles.css?v=20261004">
+<link rel="stylesheet" href="styles.css?v=20261011-2">
 </head>
 <body class="startet">
 
 <header>
   <h1>heim<span>ERP</span> <span class="muted" style="font-weight:400">· Liegenschaftskosten &amp; Steuern Aargau</span></h1>
+  <span id="version" class="muted" title="Laufender Stand: Release-Tag und Commit"></span>
   <div class="spacer"></div>
   <span id="status">Kein Datenordner verbunden</span>
   <button id="btnFolder" class="primary">📁 Datenordner wählen</button>
@@ -336,57 +337,30 @@
 
   <!-- ============ EINGANG: Belege von unterwegs ============ -->
   <section id="viewEingang" class="hidden">
-    <div class="panel no-print">
-      <h2>Beleg hochladen</h2>
-      <p class="muted">
-        Für unterwegs: Rechnung oder Quittung abfotografieren, kurz beschreiben, fertig.
-        Kategorie, Steueranteil und Projekt kommen später zu Hause dazu.
-        <b>Betrag und Lieferant sind optional</b> – wichtig ist, dass der Beleg gesichert ist.
-      </p>
-      <div class="flexrow">
-        <div style="flex:2">
-          <label for="egBeschreibung">Beschreibung *</label>
-          <input type="text" id="egBeschreibung" placeholder="z. B. Ersatz Boiler">
-        </div>
-        <div style="flex:1">
-          <label for="egLieferant">Handwerker / Lieferant</label>
-          <input type="text" id="egLieferant" placeholder="z. B. Sanitär Müller">
-        </div>
-      </div>
-      <div class="flexrow">
-        <div>
-          <label for="egDatum">Datum</label>
-          <input type="date" id="egDatum">
-        </div>
-        <div>
-          <label for="egBetrag">Betrag CHF</label>
-          <input type="number" id="egBetrag" step="0.05" placeholder="optional">
-        </div>
-        <div style="flex:1">
-          <label>Beleg *</label>
-          <button id="btnEgDatei" type="button">📎 Foto oder PDF wählen</button>
-          <span id="egDateiName" class="muted"></span>
-          <input type="file" id="egDateiInput" class="hidden" accept="image/*,application/pdf" capture="environment">
-        </div>
-      </div>
-      <button id="btnEingangSenden" class="primary">Hochladen</button>
-    </div>
-
     <div class="panel">
-      <h2>Bereits hochgeladen</h2>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Datum</th><th>Beschreibung</th><th>Lieferant</th>
-              <th class="num">Betrag CHF</th><th>Beleg</th><th>Status</th>
-              <th class="eg-aktion">Aktion</th>
-            </tr>
-          </thead>
-          <tbody id="egListeBody"></tbody>
-        </table>
+      <div class="eg-titel">
+        <h2>📥 Offene Belege <span id="egAnzahl" class="muted" style="font-weight:400"></span></h2>
+        <a class="eg-hochladen" href="hochladen.html">Beleg hochladen</a>
       </div>
-      <p id="egListeEmpty" class="muted">Noch nichts hochgeladen.</p>
+      <p id="egSammelHinweis" class="muted hidden">Mehrere Fotos derselben Rechnung? «auswählen» anhaken und zusammen als einen Eintrag übernehmen.</p>
+      <div id="egSammel" class="eg-sammel hidden" role="status">
+        <strong id="egSammelText"></strong>
+        <button class="small ok" id="btnSammelBuchen">Zusammen als einen Eintrag übernehmen</button>
+        <button class="small" id="btnSammelAufheben">Auswahl aufheben</button>
+      </div>
+      <div id="egKarten" class="eg-karten"></div>
+      <p id="egListeEmpty" class="muted">Keine offenen Belege. Unterwegs hochgeladene erscheinen hier.</p>
+      <details id="egErledigtWrap" class="eg-erledigt hidden">
+        <summary>Übernommen (<span id="egErledigtAnzahl">0</span>)</summary>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Datum</th><th>Beschreibung</th><th>Lieferant</th><th class="num">Betrag CHF</th><th></th></tr>
+            </thead>
+            <tbody id="egErledigtBody"></tbody>
+          </table>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -394,12 +368,12 @@
 
 <input type="file" id="belegInput" class="hidden" multiple accept="image/*,application/pdf">
 
-<script src="js/basis.js?v=20261004"></script>
-<script src="js/speicher.js?v=20261004"></script>
-<script src="js/speicher-server.js?v=20261004"></script>
-<script src="js/anmeldung.js?v=20261004"></script>
-<script src="js/eingang.js?v=20261004"></script>
-<script src="js/wiederkehrend.js?v=20261004"></script>
-<script src="js/app.js?v=20261004"></script>
+<script src="js/basis.js?v=20261011-2"></script>
+<script src="js/speicher.js?v=20261011-2"></script>
+<script src="js/speicher-server.js?v=20261011-2"></script>
+<script src="js/anmeldung.js?v=20261011-2"></script>
+<script src="js/eingang.js?v=20261011-2"></script>
+<script src="js/wiederkehrend.js?v=20261011-2"></script>
+<script src="js/app.js?v=20261011-2"></script>
 </body>
 </html>
