@@ -1,6 +1,6 @@
 {
   "name": "heimerp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Server-Backend für heimERP (Dual-Mode: lokaler Ordner oder Server)",
   "main": "index.js",
