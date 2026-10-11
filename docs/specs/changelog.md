@@ -6,6 +6,10 @@ nach [SemVer](https://semver.org/lang/de/). Neue Einträge zuerst unter
 
 ## [Unreleased]
 
+### Fixed
+- Aus dem Eingang übernommene Einträge wurden mit leerem Status gespeichert und
+  fehlten bis zum Neuladen im Filter «Bestätigt»; sie sind jetzt bestätigt
+
 ## [1.2.0] – 2026-10-11
 
 ### Added

@@ -64,7 +64,7 @@ ohne Beschreibung `<JJMMTT>_Beleg…` (bereinigt, bei Kollision `_2`, `_3` …).
 1. Arbeitsliste: offene Posten als Karten, **älteste zuerst**, mit Vorschau des
    Belegs, Beschreibung, Lieferant, Betrag (oder Hinweis, dass er fehlt)
 2. **Als Eintrag übernehmen:** öffnet das Erfassungsformular vorausgefüllt
-   (Datum, Beschreibung, Lieferant, Betrag, Status *offen*, Datei als Beleg)
+   (Datum, Beschreibung, Lieferant, Betrag, Status *bestätigt*, Datei als Beleg)
 3. **Zusammen übernehmen:** gehören mehrere Posten zur selben Rechnung (z. B.
    zwei Seiten), werden sie angehakt («auswählen») und als **ein** Eintrag
    übernommen: alle Dateien als Belege, Beträge addiert, Beschreibung und
