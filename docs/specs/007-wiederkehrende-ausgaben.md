@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Aktiv (v1.0.0) |
+| **Status** | Aktiv (v1.2.1) |
 | **Code** | `js/wiederkehrend.js` (`generateRecurring`, Vorlagen), `js/app.js` (`saveEntry`) |
 | **Tests** | keine (Frontend) |
 | **Verwandt** | [005 — Erfassen](005-erfassen-liste.md), [009 — Budget](009-budget-projekte.md) |
@@ -49,7 +49,7 @@ in Jahresrechnung und Dossier. Betrag anpassen oder Beleg anhängen: ✏️.
 |---|---|
 | Haken «aktiv» entfernen | pausiert: es entstehen keine neuen Einträge; bestehende bleiben |
 | Haken wieder setzen | holt alles nach, was seit der gemerkten Fälligkeit bis Ende Jahr fällig wäre |
-| ✏️ Bearbeiten | noch nicht bestätigte geplante Einträge dieser Vorlage werden gelöscht und ab dem Datum im Formular («Nächste Fälligkeit») mit den neuen Angaben neu erzeugt; bestätigte bleiben. **Achtung:** siehe Offene Punkte |
+| ✏️ Bearbeiten | das Formular zeigt als «Nächste Fälligkeit» den **frühesten noch offenen Termin** (gibt es keinen: die gemerkte nächste Fälligkeit). Beim Speichern werden die noch nicht bestätigten geplanten Einträge gelöscht und ab diesem Datum mit den neuen Angaben neu erzeugt; bestätigte bleiben |
 | 🗑 Löschen | nach Rückfrage; noch nicht bestätigte geplante Einträge werden mitgelöscht, bestätigte bleiben |
 
 ## Daten & Schnittstellen
@@ -65,15 +65,10 @@ Vorlage in der Spalte `VorlageID`.
 - Fälligkeit liegt in der Vergangenheit → alle Termine bis Ende Jahr entstehen auf einmal, auch die verpassten
 - Jahreswechsel: Einträge fürs neue Jahr entstehen erst, wenn die App im neuen Jahr geöffnet wird
 - Unbekanntes Intervall in alten Daten → wird wie jährlich behandelt
+- Beim Bearbeiten bleibt der gemerkte Tag im Monat erhalten, solange das vorgeschlagene Datum nicht geändert wird – auch wenn es ein gekürzter Monatsletzter ist (28.2. bei Tag 31). Wer das Datum ändert, setzt damit einen neuen Tag
 - Schutz gegen Endlosschleifen: höchstens 1000 Einträge pro Durchlauf
 
 ## Offene Punkte
 
-- [ ] **Bearbeiten löscht die geplanten Einträge des laufenden Jahres.** Das
-  Formular zeigt beim Bearbeiten die gemerkte nächste Fälligkeit – nach dem
-  Erzeugen liegt sie meist schon im Folgejahr. Wer nur den Betrag ändert und
-  speichert, verliert die noch offenen geplanten Einträge dieses Jahres, und
-  bis zum Jahreswechsel entsteht nichts Neues. Abhilfe heute: das Datum beim
-  Bearbeiten auf den nächsten noch offenen Termin zurückstellen
 - [ ] Kein Blick über das Jahresende hinaus – das Budget fürs Folgejahr kennt wiederkehrende Ausgaben erst ab Januar
 - [ ] Keine automatisierten Tests für die Datumsrechnung

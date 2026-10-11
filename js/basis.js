@@ -31,6 +31,8 @@ let entries = [];            // Array von Objekten
 let settings = { eigenmietwert: {}, pauschalSatz: {}, vorlagen: [], budgets: {}, projektBudgets: {} };
 let editId = null;           // gerade bearbeiteter Eintrag
 let editVorlageId = null;    // gerade bearbeitete Vorlage
+let editVorlageDatum = null; // Datum, das beim Bearbeiten einer Vorlage vorgeschlagen wurde
+let editKategorieAlt = null; // Kategorie eines alten Eintrags, die es in der Liste nicht mehr gibt
 let pendingFiles = [];       // neu angehängte File-Objekte (noch nicht kopiert)
 let pendingExisting = [];    // bereits gespeicherte Belegpfade beim Bearbeiten
 

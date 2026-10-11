@@ -19,10 +19,3 @@ Zeile hier ergänzen.
 | 009 | [Budget und Projekte](009-budget-projekte.md) | Jahresbudget pro Kategorie, Projekte über mehrere Jahre | `js/app.js` | Aktiv |
 | 010 | [Dossier Grundstückgewinnsteuer](010-dossier-grundstueckgewinnsteuer.md) | wertvermehrende Investitionen über alle Jahre | `js/app.js` | Aktiv |
 | 011 | [Anmeldung und Benutzer](011-anmeldung-benutzer.md) | Login, Sitzungen, Rate-Limit, Benutzer-CLI | `server/auth.js` | Aktiv |
-
-## Bekannte Schwächen
-
-Beim Schreiben der Specs gegen den Code aufgefallen und in den jeweiligen
-«Offenen Punkten» festgehalten – die wichtigste: das Bearbeiten einer Vorlage
-löscht die geplanten Einträge des laufenden Jahres
-([007](007-wiederkehrende-ausgaben.md)).
