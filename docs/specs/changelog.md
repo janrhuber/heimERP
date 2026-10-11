@@ -6,6 +6,8 @@ nach [SemVer](https://semver.org/lang/de/). Neue Einträge zuerst unter
 
 ## [Unreleased]
 
+## [1.2.0] – 2026-10-11
+
 ### Added
 - Eingang als Arbeitsliste: offene Belege als Karten mit Vorschau, älteste zuerst
 - Mehrere Belege auswählen und zusammen als einen Eintrag übernehmen
